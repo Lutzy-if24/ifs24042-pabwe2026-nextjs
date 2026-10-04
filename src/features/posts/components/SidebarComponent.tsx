@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   IconHome,
   IconUser,
@@ -24,10 +24,15 @@ const menuItems = [
 
 export default function SidebarComponent({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isMe = searchParams.get("is_me") === "1";
 
   function isActive(href: string) {
-    if (href === "/" || href.startsWith("/?")) {
-      return pathname === "/";
+    if (href === "/") {
+      return pathname === "/" && !isMe;
+    }
+    if (href === "/?is_me=1") {
+      return pathname === "/" && isMe;
     }
     return pathname.startsWith(href);
   }
@@ -60,7 +65,7 @@ export default function SidebarComponent({ open = false, onClose }: SidebarProps
           </button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1" aria-label="Menu utama">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -70,6 +75,7 @@ export default function SidebarComponent({ open = false, onClose }: SidebarProps
                 href={item.href}
                 onClick={onClose}
                 data-testid={`sidebar-link-${item.label}`}
+                aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active
                     ? "bg-teal-50 text-teal-700"

@@ -32,12 +32,16 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="login-email-input"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             Email
           </label>
           <div className="relative">
             <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
+              id="login-email-input"
               type="email"
               value={email}
               onChange={onEmailChange}
@@ -50,12 +54,16 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="login-password-input"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             Kata Sandi
           </label>
           <div className="relative">
             <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
+              id="login-password-input"
               type="password"
               value={password}
               onChange={onPasswordChange}
@@ -68,6 +76,7 @@ export default function LoginPage() {
         </div>
 
         <button
+          id="login-submit-button"
           type="submit"
           disabled={isAuthLogin}
           data-testid="login-submit"
