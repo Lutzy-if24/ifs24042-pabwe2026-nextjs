@@ -8,6 +8,7 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["300", "400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
   display: "swap",
+  variable: "--font-jakarta",
 });
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body
-        className={`${jakarta.className} bg-slate-50 text-slate-900 antialiased min-h-screen`}
+        className={`${jakarta.variable} bg-slate-50 text-slate-900 antialiased min-h-screen`}
         suppressHydrationWarning
       >
         <Providers>{children}</Providers>
