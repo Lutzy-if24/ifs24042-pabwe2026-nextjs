@@ -21,7 +21,7 @@ export default function AuthLayout({
   return (
     <main className="min-h-screen flex flex-col md:flex-row bg-slate-50">
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-teal-700 to-cyan-800 text-white p-12 flex-col justify-center">
-        <h1 className="text-4xl font-bold mb-4">Delcom Posts</h1>
+        <p className="text-4xl font-bold mb-4">Delcom Posts</p>
         <p className="text-teal-100 text-lg leading-relaxed">
           Bagikan pemikiran, cerita, dan momen Anda. Terhubung dengan komunitas
           melalui postingan yang bermakna.

@@ -25,8 +25,8 @@ export default function LoginPage() {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8">
-      <h2 className="text-2xl font-bold text-slate-800 mb-1">Masuk</h2>
-      <p className="text-slate-500 text-sm mb-6">
+      <h1 className="text-2xl font-bold text-slate-800 mb-1">Masuk</h1>
+      <p className="text-slate-600 text-sm mb-6">
         Selamat datang kembali di Delcom Posts
       </p>
 
@@ -39,7 +39,10 @@ export default function LoginPage() {
             Email
           </label>
           <div className="relative">
-            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
+            <IconMail
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5"
+              aria-hidden="true"
+            />
             <input
               id="login-email-input"
               type="email"
@@ -61,7 +64,10 @@ export default function LoginPage() {
             Kata Sandi
           </label>
           <div className="relative">
-            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
+            <IconLock
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5"
+              aria-hidden="true"
+            />
             <input
               id="login-password-input"
               type="password"
@@ -86,7 +92,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-600">
         Belum punya akun?{" "}
         <Link
           href="/auth/register"

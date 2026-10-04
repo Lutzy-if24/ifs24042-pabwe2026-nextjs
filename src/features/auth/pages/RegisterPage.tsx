@@ -28,8 +28,8 @@ export default function RegisterPage() {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8">
-      <h2 className="text-2xl font-bold text-slate-800 mb-1">Daftar</h2>
-      <p className="text-slate-500 text-sm mb-6">
+      <h1 className="text-2xl font-bold text-slate-800 mb-1">Daftar</h1>
+      <p className="text-slate-600 text-sm mb-6">
         Buat akun baru untuk mulai berbagi
       </p>
 
@@ -42,7 +42,10 @@ export default function RegisterPage() {
             Nama
           </label>
           <div className="relative">
-            <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
+            <IconUser
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5"
+              aria-hidden="true"
+            />
             <input
               id="register-name-input"
               type="text"
@@ -64,7 +67,10 @@ export default function RegisterPage() {
             Email
           </label>
           <div className="relative">
-            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
+            <IconMail
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5"
+              aria-hidden="true"
+            />
             <input
               id="register-email-input"
               type="email"
@@ -86,7 +92,10 @@ export default function RegisterPage() {
             Kata Sandi
           </label>
           <div className="relative">
-            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
+            <IconLock
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5"
+              aria-hidden="true"
+            />
             <input
               id="register-password-input"
               type="password"
@@ -112,7 +121,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-600">
         Sudah punya akun?{" "}
         <Link
           href="/auth/login"
