@@ -29,11 +29,16 @@ export default function PostLayout({
 
   if (!ready) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500" data-testid="layout-loading">
+      <main className="min-h-screen flex items-center justify-center bg-slate-50">
+        <h1 className="sr-only">Memuat halaman</h1>
+        <div
+          role="status"
+          className="text-slate-600"
+          data-testid="layout-loading"
+        >
           Memuat...
         </div>
-      </div>
+      </main>
     );
   }
 
