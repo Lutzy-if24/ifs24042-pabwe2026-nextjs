@@ -53,9 +53,9 @@ export default function HomePage() {
     <div data-testid="home-page">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">
+          <h1 className="text-xl font-bold text-slate-800">
             {isMe ? "Postingan Saya" : "Semua Postingan"}
-          </h2>
+          </h1>
           <p className="text-sm text-slate-600">
             {filtered.length} postingan ditemukan
           </p>

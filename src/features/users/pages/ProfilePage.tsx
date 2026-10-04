@@ -68,7 +68,7 @@ export default function ProfilePage() {
 
   return (
     <div data-testid="profile-page" className="max-w-xl mx-auto space-y-6">
-      <h2 className="text-xl font-bold text-slate-800">Profil Saya</h2>
+      <h1 className="text-xl font-bold text-slate-800">Profil Saya</h1>
 
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
         <div className="flex flex-col items-center mb-6">
@@ -159,7 +159,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">Ubah Kata Sandi</h3>
+        <h2 className="font-semibold text-slate-800 mb-4">Ubah Kata Sandi</h2>
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
             <label

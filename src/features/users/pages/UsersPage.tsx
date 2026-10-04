@@ -26,18 +26,24 @@ export default function UsersPage() {
 
   return (
     <div data-testid="users-page">
-      <h2 className="text-xl font-bold text-slate-800 mb-1">Daftar Pengguna</h2>
-      <p className="text-sm text-slate-500 mb-6">
+      <h1 className="text-xl font-bold text-slate-800 mb-1">Daftar Pengguna</h1>
+      <p className="text-sm text-slate-600 mb-6">
         {filtered.length} pengguna ditemukan
       </p>
 
       <div className="relative mb-6">
-        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+        <IconSearch
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600"
+          aria-hidden="true"
+        />
         <input
+          id="users-search"
+          name="users-search"
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari pengguna..."
+          aria-label="Cari pengguna"
           data-testid="users-search"
           className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
@@ -62,12 +68,15 @@ export default function UsersPage() {
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
-                  <IconUser className="w-6 h-6 text-teal-700" />
+                  <IconUser
+                    className="w-6 h-6 text-teal-700"
+                    aria-hidden="true"
+                  />
                 </div>
               )}
               <div className="min-w-0">
                 <p className="font-medium text-slate-800 truncate">{user.name}</p>
-                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                <p className="text-xs text-slate-600 truncate">{user.email}</p>
               </div>
             </div>
           ))}

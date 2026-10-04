@@ -70,6 +70,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
   if (isPost) {
     return (
       <div className="text-center py-16 text-slate-600" data-testid="detail-loading">
+        <h1 className="sr-only">Detail Postingan</h1>
         Memuat...
       </div>
     );
@@ -78,6 +79,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
   if (!post) {
     return (
       <div className="text-center py-16 text-slate-600" data-testid="detail-not-found">
+        <h1 className="sr-only">Detail Postingan</h1>
         Postingan tidak ditemukan
       </div>
     );
@@ -85,6 +87,8 @@ export default function DetailPage({ postId }: DetailPageProps) {
 
   return (
     <div data-testid="detail-page" className="max-w-2xl mx-auto">
+      <h1 className="sr-only">Detail Postingan</h1>
+
       <button
         type="button"
         onClick={() => router.back()}
