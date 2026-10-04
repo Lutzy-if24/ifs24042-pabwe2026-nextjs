@@ -3,7 +3,7 @@ import HomePage from "@/features/posts/pages/HomePage";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="text-slate-400">Memuat...</div>}>
+    <Suspense fallback={<div className="text-slate-600">Memuat...</div>}>
       <HomePage />
     </Suspense>
   );

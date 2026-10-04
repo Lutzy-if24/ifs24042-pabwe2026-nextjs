@@ -35,12 +35,16 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="register-name-input"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             Nama
           </label>
           <div className="relative">
-            <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
             <input
+              id="register-name-input"
               type="text"
               value={name}
               onChange={onNameChange}
@@ -53,12 +57,16 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="register-email-input"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             Email
           </label>
           <div className="relative">
-            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
             <input
+              id="register-email-input"
               type="email"
               value={email}
               onChange={onEmailChange}
@@ -71,12 +79,16 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label
+            htmlFor="register-password-input"
+            className="block text-sm font-medium text-slate-700 mb-1"
+          >
             Kata Sandi
           </label>
           <div className="relative">
-            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
             <input
+              id="register-password-input"
               type="password"
               value={password}
               onChange={onPasswordChange}
@@ -90,10 +102,11 @@ export default function RegisterPage() {
         </div>
 
         <button
+          id="register-submit-button"
           type="submit"
           disabled={isAuthRegister}
           data-testid="register-submit"
-          className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-teal-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
           {isAuthRegister ? "Memproses..." : "Daftar"}
         </button>
@@ -103,7 +116,7 @@ export default function RegisterPage() {
         Sudah punya akun?{" "}
         <Link
           href="/auth/login"
-          className="text-teal-600 hover:text-teal-700 font-medium"
+          className="text-teal-700 hover:text-teal-800 font-medium"
         >
           Masuk
         </Link>

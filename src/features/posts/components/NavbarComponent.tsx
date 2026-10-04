@@ -51,7 +51,7 @@ export default function NavbarComponent({ onToggleSidebar }: NavbarProps) {
             />
           ) : (
             <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
-              <IconUser className="w-4 h-4 text-teal-600" />
+              <IconUser className="w-4 h-4 text-teal-700" />
             </div>
           )}
           <span className="font-medium" data-testid="navbar-username">

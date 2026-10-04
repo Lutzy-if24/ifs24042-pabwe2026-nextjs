@@ -76,7 +76,7 @@ export default function HomePage() {
             type="button"
             onClick={() => setShowAdd(true)}
             data-testid="add-post-btn"
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-teal-600 text-white hover:bg-teal-700"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-teal-700 text-white hover:bg-teal-800"
           >
             <IconPlus className="w-4 h-4" />
             Tambah
@@ -85,7 +85,7 @@ export default function HomePage() {
       </div>
 
       <div className="relative mb-6">
-        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
         <input
           type="text"
           value={search}
@@ -97,7 +97,7 @@ export default function HomePage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-400" data-testid="empty-posts">
+        <div className="text-center py-16 text-slate-600" data-testid="empty-posts">
           Belum ada postingan
         </div>
       ) : (

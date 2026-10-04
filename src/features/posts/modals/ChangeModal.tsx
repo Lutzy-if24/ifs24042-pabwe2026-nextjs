@@ -90,7 +90,7 @@ export default function ChangeModal({
               type="submit"
               disabled={isPostChange}
               data-testid="change-submit"
-              className="px-4 py-2 text-sm rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400"
+              className="px-4 py-2 text-sm rounded-lg bg-teal-700 text-white hover:bg-teal-800 disabled:bg-teal-400"
             >
               {isPostChange ? "Menyimpan..." : "Simpan"}
             </button>

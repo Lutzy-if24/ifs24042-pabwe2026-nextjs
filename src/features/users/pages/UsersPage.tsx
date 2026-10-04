@@ -32,7 +32,7 @@ export default function UsersPage() {
       </p>
 
       <div className="relative mb-6">
-        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
         <input
           type="text"
           value={search}
@@ -44,7 +44,7 @@ export default function UsersPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-400">Tidak ada pengguna</div>
+        <div className="text-center py-16 text-slate-600">Tidak ada pengguna</div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((user) => (
@@ -62,7 +62,7 @@ export default function UsersPage() {
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
-                  <IconUser className="w-6 h-6 text-teal-600" />
+                  <IconUser className="w-6 h-6 text-teal-700" />
                 </div>
               )}
               <div className="min-w-0">

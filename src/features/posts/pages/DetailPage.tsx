@@ -69,7 +69,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
 
   if (isPost) {
     return (
-      <div className="text-center py-16 text-slate-400" data-testid="detail-loading">
+      <div className="text-center py-16 text-slate-600" data-testid="detail-loading">
         Memuat...
       </div>
     );
@@ -77,7 +77,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
 
   if (!post) {
     return (
-      <div className="text-center py-16 text-slate-400" data-testid="detail-not-found">
+      <div className="text-center py-16 text-slate-600" data-testid="detail-not-found">
         Postingan tidak ditemukan
       </div>
     );
@@ -88,9 +88,9 @@ export default function DetailPage({ postId }: DetailPageProps) {
       <button
         type="button"
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4"
+        className="flex items-center gap-1 text-sm text-slate-600 hover:text-slate-800 mb-4"
       >
-        <IconArrowLeft className="w-4 h-4" />
+        <IconArrowLeft className="w-4 h-4" aria-hidden="true" />
         Kembali
       </button>
 
@@ -104,7 +104,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
             data-testid="detail-cover"
           />
         ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center text-teal-400">
+          <div className="w-full h-48 bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center text-teal-700">
             Tanpa cover
           </div>
         )}
@@ -115,7 +115,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
               <p className="font-semibold text-slate-800">
                 {post.author?.name || "Anonim"}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 {formatDate(post.created_at)}
               </p>
             </div>
@@ -125,28 +125,31 @@ export default function DetailPage({ postId }: DetailPageProps) {
                   type="button"
                   onClick={() => setShowCover(true)}
                   data-testid="btn-change-cover"
-                  className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+                  className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
                   title="Ubah cover"
+                  aria-label="Ubah cover"
                 >
-                  <IconPhoto className="w-4 h-4" />
+                  <IconPhoto className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowChange(true)}
                   data-testid="btn-change-post"
-                  className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+                  className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
                   title="Ubah postingan"
+                  aria-label="Ubah postingan"
                 >
-                  <IconEdit className="w-4 h-4" />
+                  <IconEdit className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
                   type="button"
                   onClick={handleDelete}
                   data-testid="btn-delete-post"
-                  className="p-2 rounded-lg hover:bg-red-50 text-red-500"
+                  className="p-2 rounded-lg hover:bg-red-50 text-red-600"
                   title="Hapus postingan"
+                  aria-label="Hapus postingan"
                 >
-                  <IconTrash className="w-4 h-4" />
+                  <IconTrash className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -162,17 +165,17 @@ export default function DetailPage({ postId }: DetailPageProps) {
               onClick={handleLike}
               data-testid="btn-like"
               className={`flex items-center gap-1.5 text-sm ${
-                isLiked ? "text-red-500" : "text-slate-500 hover:text-red-500"
+                isLiked ? "text-red-600" : "text-slate-600 hover:text-red-600"
               }`}
             >
               {isLiked ? (
-                <IconHeartFilled className="w-5 h-5" />
+                <IconHeartFilled className="w-5 h-5" aria-hidden="true" />
               ) : (
-                <IconHeart className="w-5 h-5" />
+                <IconHeart className="w-5 h-5" aria-hidden="true" />
               )}
               {likes.length} Suka
             </button>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-slate-600">
               {comments.length} Komentar
             </span>
           </div>
@@ -180,7 +183,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
       </div>
 
       <div className="mt-6 bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">Komentar</h3>
+        <h2 className="font-semibold text-slate-800 mb-4">Komentar</h2>
 
         <form onSubmit={handleComment} className="flex gap-2 mb-6">
           <input
@@ -188,20 +191,22 @@ export default function DetailPage({ postId }: DetailPageProps) {
             value={comment}
             onChange={onCommentChange}
             placeholder="Tulis komentar..."
+            aria-label="Tulis komentar"
             data-testid="comment-input"
             className="flex-1 px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
           />
           <button
             type="submit"
             data-testid="comment-submit"
-            className="px-3 py-2 rounded-lg bg-teal-600 text-white hover:bg-teal-700"
+            aria-label="Kirim komentar"
+            className="px-3 py-2 rounded-lg bg-teal-700 text-white hover:bg-teal-800"
           >
-            <IconSend className="w-4 h-4" />
+            <IconSend className="w-4 h-4" aria-hidden="true" />
           </button>
         </form>
 
         {comments.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-4">
+          <p className="text-sm text-slate-600 text-center py-4">
             Belum ada komentar
           </p>
         ) : (
@@ -214,7 +219,7 @@ export default function DetailPage({ postId }: DetailPageProps) {
               >
                 <div>
                   <p className="text-sm text-slate-700">{c.comment}</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-600 mt-1">
                     {formatDate(c.created_at)}
                   </p>
                 </div>
@@ -223,9 +228,10 @@ export default function DetailPage({ postId }: DetailPageProps) {
                     type="button"
                     onClick={() => dispatch(asyncDeleteComment(postId))}
                     data-testid="btn-delete-comment"
-                    className="p-1 text-red-400 hover:text-red-600"
+                    aria-label="Hapus komentar"
+                    className="p-1 text-red-600 hover:text-red-700"
                   >
-                    <IconTrash className="w-4 h-4" />
+                    <IconTrash className="w-4 h-4" aria-hidden="true" />
                   </button>
                 )}
               </li>

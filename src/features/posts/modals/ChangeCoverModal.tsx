@@ -83,7 +83,7 @@ export default function ChangeCoverModal({
                 className="max-h-48 mx-auto rounded-lg object-cover"
               />
             ) : (
-              <div className="flex flex-col items-center gap-2 text-slate-400">
+              <div className="flex flex-col items-center gap-2 text-slate-600">
                 <IconPhoto className="w-10 h-10" />
                 <span className="text-sm">Klik untuk pilih gambar</span>
               </div>
@@ -109,7 +109,7 @@ export default function ChangeCoverModal({
               type="submit"
               disabled={!file || isPostChangeCover}
               data-testid="cover-submit"
-              className="px-4 py-2 text-sm rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400"
+              className="px-4 py-2 text-sm rounded-lg bg-teal-700 text-white hover:bg-teal-800 disabled:bg-teal-400"
             >
               {isPostChangeCover ? "Mengunggah..." : "Unggah"}
             </button>

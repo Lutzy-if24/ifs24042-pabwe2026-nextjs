@@ -39,7 +39,7 @@ export default function LoginPage() {
             Email
           </label>
           <div className="relative">
-            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
             <input
               id="login-email-input"
               type="email"
@@ -61,7 +61,7 @@ export default function LoginPage() {
             Kata Sandi
           </label>
           <div className="relative">
-            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-5 h-5" />
             <input
               id="login-password-input"
               type="password"
@@ -80,7 +80,7 @@ export default function LoginPage() {
           type="submit"
           disabled={isAuthLogin}
           data-testid="login-submit"
-          className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
+          className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-teal-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
           {isAuthLogin ? "Memproses..." : "Masuk"}
         </button>
@@ -90,7 +90,7 @@ export default function LoginPage() {
         Belum punya akun?{" "}
         <Link
           href="/auth/register"
-          className="text-teal-600 hover:text-teal-700 font-medium"
+          className="text-teal-700 hover:text-teal-800 font-medium"
         >
           Daftar
         </Link>
