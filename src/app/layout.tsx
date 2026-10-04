@@ -1,30 +1,32 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import Providers from "@/components/Providers";
 import "./globals.css";
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Delcom Post",
-  description: "Aplikasi Berbagi Cerita & Postingan Modern",
-  icons: {
-    icon: "/logo.svg",
-  },
+  title: "Delcom Posts",
+  description: "Aplikasi postingan Delcom",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="id" className={`${plusJakarta.variable} h-full antialiased`}>
-      <body className="min-h-full bg-slate-50 text-slate-900 font-sans">
+    <html lang="id">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="bg-slate-50 text-slate-900 antialiased min-h-screen">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -1,336 +1,205 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { useState, useEffect } from "react";
-
 import {
-  asyncPutProfile,
-  asyncPostProfilePhoto,
-  asyncPutProfilePassword,
-  setIsChangeProfileActionCreator,
-  setIsChangeProfilePhotoActionCreator,
-  setIsChangeProfilePasswordActionCreator,
-} from "../states/action";
-import { showErrorDialog } from "../../../helpers/toolsHelper";
-import {
-  IconUser,
-  IconLock,
-  IconCamera,
-  IconCheck,
-  IconLoader2,
-  IconShieldLock,
-} from "@tabler/icons-react";
+  asyncSetProfile,
+  asyncChangeProfile,
+  asyncChangeProfilePhoto,
+  asyncChangeProfilePassword,
+} from "@/features/users/states/action";
+import useInput from "@/hooks/useInput";
+import { IconUser, IconCamera } from "@tabler/icons-react";
 
-function ProfilePage() {
+export default function ProfilePage() {
   const dispatch = useAppDispatch();
-  const profile = useAppSelector((state) => state.profile);
+  const {
+    profile,
+    isChangeProfile,
+    isChangeProfilePhoto,
+    isChangeProfilePassword,
+  } = useAppSelector((state) => state.users);
 
-  const isChangeProfile = useAppSelector((state) => state.isChangeProfile);
-  const isChangeProfilePhoto = useAppSelector((state) => state.isChangeProfilePhoto);
-  const isChangeProfilePassword = useAppSelector(
-    (state) => state.isChangeProfilePassword
-  );
+  const [name, onNameChange, setName] = useInput("");
+  const [email, onEmailChange, setEmail] = useInput("");
+  const [password, onPasswordChange, , resetPassword] = useInput("");
+  const [newPassword, onNewPasswordChange, , resetNewPassword] = useInput("");
+  const [confirmPassword, onConfirmPasswordChange, , resetConfirm] =
+    useInput("");
+  const photoRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  // Form states
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState("");
-
-  const [loadingProfile, setLoadingProfile] = useState(false);
-  const [loadingPhoto, setLoadingPhoto] = useState(false);
-  const [loadingPassword, setLoadingPassword] = useState(false);
+  useEffect(() => {
+    dispatch(asyncSetProfile());
+  }, [dispatch]);
 
   useEffect(() => {
     if (profile) {
       setName(profile.name || "");
       setEmail(profile.email || "");
     }
-  }, [profile]);
+  }, [profile, setName, setEmail]);
 
-  useEffect(() => {
-    if (isChangeProfile) {
-      setLoadingProfile(false);
-      dispatch(setIsChangeProfileActionCreator(false));
-    }
-  }, [isChangeProfile, dispatch]);
-
-  useEffect(() => {
-    if (isChangeProfilePhoto) {
-      setLoadingPhoto(false);
-      dispatch(setIsChangeProfilePhotoActionCreator(false));
-    }
-  }, [isChangeProfilePhoto, dispatch]);
-
-  useEffect(() => {
-    if (isChangeProfilePassword) {
-      setLoadingPassword(false);
-      dispatch(setIsChangeProfilePasswordActionCreator(false));
-      setOldPassword("");
-      setNewPassword("");
-      setNewPasswordConfirmation("");
-    }
-  }, [isChangeProfilePassword, dispatch]);
-
-  function handleUpdateProfile(e) {
+  async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) {
-      showErrorDialog("Nama tidak boleh kosong!");
-      return;
-    }
-    if (!email.trim()) {
-      showErrorDialog("Email tidak boleh kosong!");
-      return;
-    }
-    setLoadingProfile(true);
-    dispatch(asyncPutProfile(name.trim(), email.trim()));
+    await dispatch(asyncChangeProfile(name, email));
   }
 
-  function handlePhotoUpload(e) {
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      showErrorDialog("Pilih file gambar yang valid!");
-      return;
-    }
-
-    if (file.size > 3 * 1024 * 1024) {
-      showErrorDialog("Ukuran file foto maksimal 3MB!");
-      return;
-    }
-
-    setLoadingPhoto(true);
-    dispatch(asyncPostProfilePhoto(file));
+    setPhotoPreview(URL.createObjectURL(file));
+    await dispatch(asyncChangeProfilePhoto(file));
   }
 
-  function handleUpdatePassword(e) {
+  async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!oldPassword) {
-      showErrorDialog("Kata sandi lama wajib diisi!");
-      return;
-    }
-    if (!newPassword || newPassword.length < 6) {
-      showErrorDialog("Kata sandi baru minimal 6 karakter!");
-      return;
-    }
-    if (newPassword !== newPasswordConfirmation) {
-      showErrorDialog("Konfirmasi kata sandi tidak cocok!");
-      return;
-    }
-
-    setLoadingPassword(true);
-    dispatch(
-      asyncPutProfilePassword(
-        oldPassword,
-        newPassword,
-        newPasswordConfirmation
-      )
+    const success = await dispatch(
+      asyncChangeProfilePassword(password, newPassword, confirmPassword)
     );
+    if (success) {
+      resetPassword();
+      resetNewPassword();
+      resetConfirm();
+    }
   }
 
-  if (!profile) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24">
-        <IconLoader2 size={36} className="text-indigo-600 animate-spin mb-2" />
-        <p className="text-sm font-medium text-slate-600">Memuat data profil...</p>
-      </div>
-    );
-  }
+  const photoSrc = photoPreview || profile?.photo || null;
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in duration-300">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Profil Akun
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Kelola informasi identitas, foto profil, dan keamanan akun Anda.
-        </p>
-      </div>
+    <div data-testid="profile-page" className="max-w-xl mx-auto space-y-6">
+      <h2 className="text-xl font-bold text-slate-800">Profil Saya</h2>
 
-      {/* Profile Card Header */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-6">
-        <div className="relative group">
-          {profile.photo ? (
-            <img
-              src={profile.photo}
-              alt={profile.name}
-              className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-indigo-100"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center font-bold text-3xl shadow-md">
-              {profile.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-          )}
-
-          <label
-            data-testid="upload-profile-photo-btn"
-            className="absolute bottom-0 right-0 p-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md cursor-pointer transition-transform hover:scale-105"
-            title="Ubah Foto Profil"
-          >
-            {loadingPhoto ? (
-              <IconLoader2 size={16} className="animate-spin" />
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative">
+            {photoSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={photoSrc}
+                alt="Foto profil"
+                className="w-24 h-24 rounded-full object-cover"
+              />
             ) : (
-              <IconCamera size={16} />
+              <div className="w-24 h-24 rounded-full bg-teal-100 flex items-center justify-center">
+                <IconUser className="w-12 h-12 text-teal-600" />
+              </div>
             )}
+            <button
+              type="button"
+              onClick={() => photoRef.current?.click()}
+              disabled={isChangeProfilePhoto}
+              data-testid="btn-change-photo"
+              className="absolute bottom-0 right-0 p-1.5 bg-teal-600 text-white rounded-full hover:bg-teal-700"
+            >
+              <IconCamera className="w-4 h-4" />
+            </button>
             <input
+              ref={photoRef}
               type="file"
-              data-testid="profile-photo-file-input"
               accept="image/*"
-              onChange={handlePhotoUpload}
+              onChange={handlePhotoChange}
               className="hidden"
+              data-testid="photo-input"
             />
-          </label>
+          </div>
+          {isChangeProfilePhoto && (
+            <p className="text-xs text-slate-400 mt-2">Mengunggah...</p>
+          )}
         </div>
 
-        <div className="text-center sm:text-left space-y-1">
-          <h2 className="text-xl font-bold text-slate-800">{profile.name}</h2>
-          <p className="text-sm text-slate-500">{profile.email}</p>
-          <div className="pt-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
-              <IconCheck size={14} /> Terverifikasi
-            </span>
+        <form onSubmit={handleUpdateProfile} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Nama
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={onNameChange}
+              data-testid="profile-name"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              required
+            />
           </div>
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={onEmailChange}
+              data-testid="profile-email"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isChangeProfile}
+            data-testid="profile-submit"
+            className="w-full py-2.5 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:bg-teal-400 font-medium"
+          >
+            {isChangeProfile ? "Menyimpan..." : "Simpan Profil"}
+          </button>
+        </form>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Form Biodata */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <IconUser size={18} />
-            </div>
-            <h3 className="font-bold text-slate-800">Ubah Biodata</h3>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+        <h3 className="font-semibold text-slate-800 mb-4">Ubah Kata Sandi</h3>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Kata Sandi Lama
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={onPasswordChange}
+              data-testid="password-old"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              required
+            />
           </div>
-
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Nama Lengkap
-              </label>
-              <input
-                type="text"
-                data-testid="profile-name-input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Alamat Email
-              </label>
-              <input
-                type="email"
-                data-testid="profile-email-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                required
-              />
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                data-testid="submit-profile-btn"
-                disabled={loadingProfile}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-600/25 transition-all disabled:opacity-60"
-              >
-                {loadingProfile ? (
-                  <>
-                    <IconLoader2 size={18} className="animate-spin" />
-                    <span>Menyimpan Perubahan...</span>
-                  </>
-                ) : (
-                  <span>Simpan Perubahan</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Form Ganti Password */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <IconShieldLock size={18} />
-            </div>
-            <h3 className="font-bold text-slate-800">Keamanan & Password</h3>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Kata Sandi Baru
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={onNewPasswordChange}
+              data-testid="password-new"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              required
+              minLength={6}
+            />
           </div>
-
-          <form onSubmit={handleUpdatePassword} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Kata Sandi Saat Ini
-              </label>
-              <input
-                type="password"
-                data-testid="current-password-input"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                placeholder="••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Kata Sandi Baru
-              </label>
-              <input
-                type="password"
-                data-testid="new-password-input"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimal 6 karakter"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Ulangi Kata Sandi Baru
-              </label>
-              <input
-                type="password"
-                data-testid="confirm-password-input"
-                value={newPasswordConfirmation}
-                onChange={(e) => setNewPasswordConfirmation(e.target.value)}
-                placeholder="Konfirmasi kata sandi"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                required
-              />
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                data-testid="submit-password-btn"
-                disabled={loadingPassword}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-xl shadow-md transition-all disabled:opacity-60"
-              >
-                {loadingPassword ? (
-                  <>
-                    <IconLoader2 size={18} className="animate-spin" />
-                    <span>Memperbarui Password...</span>
-                  </>
-                ) : (
-                  <span>Perbarui Password</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Konfirmasi Kata Sandi Baru
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={onConfirmPasswordChange}
+              data-testid="password-confirm"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              required
+              minLength={6}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isChangeProfilePassword}
+            data-testid="password-submit"
+            className="w-full py-2.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900 disabled:bg-slate-400 font-medium"
+          >
+            {isChangeProfilePassword ? "Menyimpan..." : "Ubah Kata Sandi"}
+          </button>
+        </form>
       </div>
     </div>
   );
 }
-
-export default ProfilePage;

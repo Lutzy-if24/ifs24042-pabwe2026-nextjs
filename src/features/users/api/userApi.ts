@@ -1,117 +1,42 @@
-import apiHelper from "../../../helpers/apiHelper";
-import { DELCOM_BASEURL } from "@/lib/config";
+import { fetchWithAuth } from "@/helpers/apiHelper";
+import type { ApiResult, User } from "@/types";
 
-const userApi = (() => {
-  const BASE_URL = `${DELCOM_BASEURL}/users`;
+export async function getUsersApi() {
+  return (await fetchWithAuth("/users")) as ApiResult<{ users: User[] }>;
+}
 
-  function _url(path) {
-    return BASE_URL + path;
-  }
+export async function getProfileApi() {
+  return (await fetchWithAuth("/users/me")) as ApiResult<{ user: User }>;
+}
 
-  async function getUsers() {
-    const response = await apiHelper.fetchData(_url("/"), {
-      method: "GET",
-    });
+export async function updateProfileApi(name: string, email: string) {
+  return (await fetchWithAuth("/users/me", {
+    method: "PUT",
+    body: JSON.stringify({ name, email }),
+  })) as ApiResult<{ user: User }>;
+}
 
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengambil data pengguna");
-    }
+export async function changePhotoApi(file: File) {
+  const formData = new FormData();
+  formData.append("photo", file);
+  return (await fetchWithAuth("/users/me/photo", {
+    method: "POST",
+    body: formData,
+    isFormData: true,
+  })) as ApiResult;
+}
 
-    return result.data?.users || [];
-  }
-
-  async function getUserById(userId) {
-    const response = await apiHelper.fetchData(_url(`/${userId}`), {
-      method: "GET",
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengambil detail pengguna");
-    }
-
-    return result.data?.user;
-  }
-
-  async function getProfile() {
-    const response = await apiHelper.fetchData(_url("/me"), {
-      method: "GET",
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengambil data profil");
-    }
-
-    return result.data?.user;
-  }
-
-  async function putProfile(name, email) {
-    const response = await apiHelper.fetchData(_url("/me"), {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-      }),
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengubah profil");
-    }
-
-    return result.data?.user;
-  }
-
-  async function postProfilePhoto(photo) {
-    const formData = new FormData();
-    formData.append("photo", photo, photo.name || "profile.png");
-    const response = await apiHelper.fetchData(_url("/me/photo"), {
-      method: "PUT",
-      body: formData,
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengubah foto profil");
-    }
-
-    return result.message;
-  }
-
-  async function putProfilePassword(password, newPassword, newPasswordConfirmation) {
-    const response = await apiHelper.fetchData(_url("/password"), {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        password,
-        new_password: newPassword,
-        new_password_confirmation: newPasswordConfirmation || newPassword,
-      }),
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal mengubah kata sandi");
-    }
-
-    return result.message;
-  }
-
-  return {
-    getUsers,
-    getUserById,
-    getProfile,
-    putProfile,
-    postProfilePhoto,
-    putProfilePassword,
-  };
-})();
-
-export default userApi;
+export async function changePasswordApi(
+  password: string,
+  new_password: string,
+  new_password_confirmation: string
+) {
+  return (await fetchWithAuth("/users/password", {
+    method: "PUT",
+    body: JSON.stringify({
+      password,
+      new_password,
+      new_password_confirmation,
+    }),
+  })) as ApiResult;
+}

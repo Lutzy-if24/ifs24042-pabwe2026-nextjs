@@ -1,5 +1,10 @@
-"use client";
+import { Suspense } from "react";
+import HomePage from "@/features/posts/pages/HomePage";
 
-import HomePage from "@/features/todos/pages/HomePage";
-
-export default HomePage;
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-slate-400">Memuat...</div>}>
+      <HomePage />
+    </Suspense>
+  );
+}

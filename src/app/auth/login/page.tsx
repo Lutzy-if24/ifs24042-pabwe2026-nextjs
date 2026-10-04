@@ -1,5 +1,5 @@
-"use client";
-
 import LoginPage from "@/features/auth/pages/LoginPage";
 
-export default LoginPage;
+export default function Page() {
+  return <LoginPage />;
+}

@@ -1,11 +1,5 @@
-"use client";
+import PostLayout from "@/features/posts/layouts/PostLayout";
 
-import TodoLayout from "@/features/todos/layouts/TodoLayout";
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <TodoLayout>{children}</TodoLayout>;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <PostLayout>{children}</PostLayout>;
 }

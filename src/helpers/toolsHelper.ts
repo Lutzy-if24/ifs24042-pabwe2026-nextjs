@@ -1,70 +1,61 @@
 import Swal from "sweetalert2";
 
-export function showErrorDialog(message) {
+export function showSuccessDialog(message: string) {
   return Swal.fire({
-    title: "Terjadi Kesalahan",
+    icon: "success",
+    title: "Berhasil",
     text: message,
-    icon: "error",
-    confirmButtonText: "Tutup",
-    confirmButtonColor: "#ef4444",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      Swal.close();
-    }
-    return result;
+    confirmButtonColor: "#0f766e",
   });
 }
 
-export function showWarningDialog(message) {
+export function showErrorDialog(message: string) {
   return Swal.fire({
+    icon: "error",
+    title: "Gagal",
+    text: message,
+    confirmButtonColor: "#dc2626",
+  });
+}
+
+export function showWarningDialog(message: string) {
+  return Swal.fire({
+    icon: "warning",
     title: "Peringatan",
     text: message,
-    icon: "warning",
-    confirmButtonText: "Tutup",
-    confirmButtonColor: "#f59e0b",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      Swal.close();
-    }
-    return result;
+    confirmButtonColor: "#d97706",
   });
 }
 
-export function showSuccessDialog(message) {
+export function showConfirmDialog(
+  title: string,
+  text: string
+): Promise<{ isConfirmed: boolean }> {
   return Swal.fire({
-    title: "Tindakan Berhasil",
-    text: message,
-    icon: "success",
-    confirmButtonText: "Tutup",
-    confirmButtonColor: "#10b981",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      Swal.close();
-    }
-    return result;
-  });
-}
-
-export function showConfirmDialog(message) {
-  return Swal.fire({
-    title: "Konfirmasi",
-    text: message,
     icon: "question",
+    title,
+    text,
     showCancelButton: true,
     confirmButtonText: "Ya",
-    cancelButtonText: "Tidak",
-    confirmButtonColor: "#6366f1",
-    cancelButtonColor: "#94a3b8",
+    cancelButtonText: "Batal",
+    confirmButtonColor: "#0f766e",
+    cancelButtonColor: "#64748b",
   });
 }
 
-export function formatDate(date) {
-  if (!date) return "-";
-  return new Date(date).toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+export function formatDate(dateString?: string | null): string {
+  if (!dateString) return "-";
+  try {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "-";
+  }
 }

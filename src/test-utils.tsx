@@ -1,79 +1,36 @@
-import React from "react";
-import { render } from "@testing-library/react";
+import React, { PropsWithChildren } from "react";
+import { render, RenderOptions } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import {
-  isAuthLoginReducer,
-  isAuthRegisterReducer,
-  isAuthLogoutReducer,
-} from "./features/auth/states/reducer";
-import {
-  usersReducer,
-  userReducer,
-  profileReducer,
-  isProfileReducer,
-  isChangeProfileReducer,
-  isChangeProfilePhotoReducer,
-  isChangeProfilePasswordReducer,
-} from "./features/users/states/reducer";
-import {
-  todosReducer,
-  todoReducer,
-  isTodoReducer,
-  isTodoAddReducer,
-  isTodoAddedReducer,
-  isTodoChangeReducer,
-  isTodoChangedReducer,
-  isTodoChangeCoverReducer,
-  isTodoChangedCoverReducer,
-  isTodoDeleteReducer,
-  isTodoDeletedReducer,
-} from "./features/todos/states/reducer";
+import authReducer from "@/features/auth/states/reducer";
+import usersReducer from "@/features/users/states/reducer";
+import postsReducer from "@/features/posts/states/reducer";
 
-export function createMockStore(preloadedState = {}) {
+export function createTestStore(preloadedState = {}) {
   return configureStore({
     reducer: {
-      isAuthLogin: isAuthLoginReducer,
-      isAuthRegister: isAuthRegisterReducer,
-      isAuthLogout: isAuthLogoutReducer,
+      auth: authReducer,
       users: usersReducer,
-      user: userReducer,
-      profile: profileReducer,
-      isProfile: isProfileReducer,
-      isChangeProfile: isChangeProfileReducer,
-      isChangeProfilePhoto: isChangeProfilePhotoReducer,
-      isChangeProfilePassword: isChangeProfilePasswordReducer,
-      todos: todosReducer,
-      todo: todoReducer,
-      isTodo: isTodoReducer,
-      isTodoAdd: isTodoAddReducer,
-      isTodoAdded: isTodoAddedReducer,
-      isTodoChange: isTodoChangeReducer,
-      isTodoChanged: isTodoChangedReducer,
-      isTodoChangeCover: isTodoChangeCoverReducer,
-      isTodoChangedCover: isTodoChangedCoverReducer,
-      isTodoDelete: isTodoDeleteReducer,
-      isTodoDeleted: isTodoDeletedReducer,
+      posts: postsReducer,
     },
     preloadedState,
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
-        // Dev-only checks are slow under Vitest/jsdom and spam stderr.
-        serializableCheck: false,
-        immutableCheck: false,
-      }),
   });
 }
 
+type ExtendedOptions = Omit<RenderOptions, "wrapper"> & {
+  preloadedState?: Record<string, unknown>;
+  store?: ReturnType<typeof createTestStore>;
+};
+
 export function renderWithProviders(
-  ui,
+  ui: React.ReactElement,
   {
     preloadedState = {},
-    store = createMockStore(preloadedState),
+    store = createTestStore(preloadedState),
     ...renderOptions
-  } = {}
+  }: ExtendedOptions = {}
 ) {
-  function Wrapper({ children }: { children: React.ReactNode }) {
+  function Wrapper({ children }: PropsWithChildren) {
     return <Provider store={store}>{children}</Provider>;
   }
 

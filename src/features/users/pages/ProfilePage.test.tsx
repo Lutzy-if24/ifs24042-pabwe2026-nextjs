@@ -1,178 +1,291 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, fireEvent } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "@/test-utils";
 import ProfilePage from "./ProfilePage";
-import { renderWithProviders } from "../../../test-utils";
-import * as toolsHelper from "../../../helpers/toolsHelper";
-import * as userAction from "../states/action";
+
+const changeProfileMock = vi.fn();
+const changePhotoMock = vi.fn();
+const changePasswordMock = vi.fn();
+
+vi.mock("@/features/users/states/action", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/features/users/states/action")>();
+  return {
+    ...actual,
+    asyncSetProfile: () => async () => ({
+      id: 1,
+      name: "Profile User",
+      email: "p@t.com",
+    }),
+    asyncChangeProfile: (...args: unknown[]) => changeProfileMock(...args),
+    asyncChangeProfilePhoto: (...args: unknown[]) => changePhotoMock(...args),
+    asyncChangeProfilePassword: (...args: unknown[]) =>
+      changePasswordMock(...args),
+  };
+});
+
+const baseUsersState = {
+  users: [],
+  user: null,
+  profile: {
+    id: 1,
+    name: "Profile User",
+    email: "p@t.com",
+    photo: null as string | null,
+  },
+  isProfile: false,
+  isChangeProfile: false,
+  isChangeProfilePhoto: false,
+  isChangeProfilePassword: false,
+};
 
 describe("ProfilePage", () => {
-  const mockProfile = {
-    id: 1,
-    name: "Abdullah Ubaid",
-    email: "ifs18005@del.ac.id",
-    photo: "https://example.com/photo.jpg",
-  };
-
-  const mockProfileEmptyName = {
-    id: 3,
-    name: "",
-    email: "",
-    photo: null,
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
+    changeProfileMock.mockImplementation(() => async () => true);
+    changePhotoMock.mockImplementation(() => async () => true);
+    changePasswordMock.mockImplementation(() => async () => true);
   });
 
-  it("should show loading indicator when profile is null", () => {
+  it("renders profile form with profile data", async () => {
     renderWithProviders(<ProfilePage />, {
-      preloadedState: { profile: null },
+      preloadedState: { users: baseUsersState },
     });
-    expect(screen.getByText("Memuat data profil...")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-page")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("profile-name")).toBeInTheDocument();
+    expect(screen.getByTestId("profile-email")).toBeInTheDocument();
+    expect(screen.getByTestId("password-submit")).toBeInTheDocument();
   });
 
-  it("should display profile information and initial avatar fallback", () => {
+  it("keeps the form empty and shows placeholder when there is no profile", async () => {
     renderWithProviders(<ProfilePage />, {
       preloadedState: {
-        profile: {
-          id: 2,
-          name: "Budi",
-          email: "budi@del.ac.id",
-          photo: null,
+        users: { ...baseUsersState, profile: null as never },
+      },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-page")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("profile-name")).toHaveValue("");
+    expect(screen.getByTestId("profile-email")).toHaveValue("");
+    expect(screen.queryByAltText("Foto profil")).not.toBeInTheDocument();
+  });
+
+  it("renders photo when profile has photo", async () => {
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: {
+        users: {
+          ...baseUsersState,
+          profile: {
+            ...baseUsersState.profile!,
+            photo: "https://example.com/avatar.png",
+          },
         },
       },
     });
-
-    expect(screen.getByText("Budi")).toBeInTheDocument();
-    expect(screen.getByText("budi@del.ac.id")).toBeInTheDocument();
-    expect(screen.getByText("B")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByAltText("Foto profil")).toHaveAttribute(
+        "src",
+        "https://example.com/avatar.png"
+      );
+    });
   });
 
-  it("should handle profile with empty name and email using fallback avatar initial", () => {
+  it("submits profile update", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: { users: baseUsersState },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-name")).toBeInTheDocument();
+    });
+    const nameInput = screen.getByTestId("profile-name");
+    await user.clear(nameInput);
+    await user.type(nameInput, "New Name");
+    await user.click(screen.getByTestId("profile-submit"));
+    await waitFor(() => {
+      expect(changeProfileMock).toHaveBeenCalled();
+    });
+  });
+
+  it("shows loading on profile submit button", async () => {
     renderWithProviders(<ProfilePage />, {
       preloadedState: {
-        profile: mockProfileEmptyName,
+        users: { ...baseUsersState, isChangeProfile: true },
       },
     });
-
-    expect(screen.getByText("U")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-submit")).toHaveTextContent(
+        "Menyimpan..."
+      );
+    });
+    expect(screen.getByTestId("profile-submit")).toBeDisabled();
   });
 
-  it("should validate and submit update profile", () => {
-    const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-    const putProfileSpy = vi
-      .spyOn(userAction, "asyncPutProfile")
-      .mockReturnValue(() => {});
-
+  it("handles photo change with file", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<ProfilePage />, {
-      preloadedState: { profile: mockProfile },
+      preloadedState: { users: baseUsersState },
     });
-
-    const nameInput = screen.getByTestId("profile-name-input");
-    const emailInput = screen.getByTestId("profile-email-input");
-    const profileForm = nameInput.closest("form");
-
-    // Empty name
-    fireEvent.change(nameInput, { target: { value: "   " } });
-    fireEvent.submit(profileForm);
-    expect(errorSpy).toHaveBeenCalledWith("Nama tidak boleh kosong!");
-
-    // Empty email
-    fireEvent.change(nameInput, { target: { value: "Abdullah Baru" } });
-    fireEvent.change(emailInput, { target: { value: "   " } });
-    fireEvent.submit(profileForm);
-    expect(errorSpy).toHaveBeenCalledWith("Email tidak boleh kosong!");
-
-    // Valid
-    fireEvent.change(emailInput, { target: { value: "baru@del.ac.id" } });
-    fireEvent.submit(profileForm);
-    expect(putProfileSpy).toHaveBeenCalledWith("Abdullah Baru", "baru@del.ac.id");
+    await waitFor(() => {
+      expect(screen.getByTestId("photo-input")).toBeInTheDocument();
+    });
+    const file = new File(["hello"], "photo.png", { type: "image/png" });
+    const input = screen.getByTestId("photo-input") as HTMLInputElement;
+    await user.upload(input, file);
+    await waitFor(() => {
+      expect(changePhotoMock).toHaveBeenCalled();
+    });
   });
 
-  it("should validate and upload photo", () => {
-    const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-    const photoSpy = vi
-      .spyOn(userAction, "asyncPostProfilePhoto")
-      .mockReturnValue(() => {});
-
+  it("does nothing when photo input has no file", async () => {
     renderWithProviders(<ProfilePage />, {
-      preloadedState: { profile: mockProfile },
+      preloadedState: { users: baseUsersState },
     });
-
-    const fileInput = screen.getByTestId("profile-photo-file-input");
-
-    // Empty file
-    fireEvent.change(fileInput, { target: { files: [] } });
-
-    // Invalid file type
-    const textFile = new File(["dummy"], "file.txt", { type: "text/plain" });
-    fireEvent.change(fileInput, { target: { files: [textFile] } });
-    expect(errorSpy).toHaveBeenCalledWith("Pilih file gambar yang valid!");
-
-    // Large file (>3MB)
-    const largeFile = new File([new Uint8Array(4 * 1024 * 1024)], "large.png", {
-      type: "image/png",
+    await waitFor(() => {
+      expect(screen.getByTestId("photo-input")).toBeInTheDocument();
     });
-    fireEvent.change(fileInput, { target: { files: [largeFile] } });
-    expect(errorSpy).toHaveBeenCalledWith("Ukuran file foto maksimal 3MB!");
-
-    // Valid file
-    const validFile = new File(["img"], "profile.png", { type: "image/png" });
-    fireEvent.change(fileInput, { target: { files: [validFile] } });
-    expect(photoSpy).toHaveBeenCalledWith(validFile);
+    const input = screen.getByTestId("photo-input");
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(changePhotoMock).not.toHaveBeenCalled();
   });
 
-  it("should validate and submit password update", () => {
-    const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-    const putPasswordSpy = vi
-      .spyOn(userAction, "asyncPutProfilePassword")
-      .mockReturnValue(() => {});
-
+  it("clicks change photo button to open file picker", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<ProfilePage />, {
-      preloadedState: { profile: mockProfile },
+      preloadedState: { users: baseUsersState },
     });
+    await waitFor(() => {
+      expect(screen.getByTestId("btn-change-photo")).toBeInTheDocument();
+    });
+    const clickSpy = vi.fn();
+    const input = screen.getByTestId("photo-input") as HTMLInputElement;
+    input.click = clickSpy;
+    await user.click(screen.getByTestId("btn-change-photo"));
+    expect(clickSpy).toHaveBeenCalled();
+  });
 
-    const oldPassInput = screen.getByTestId("current-password-input");
-    const newPassInput = screen.getByTestId("new-password-input");
-    const confirmPassInput = screen.getByTestId("confirm-password-input");
-    const passwordForm = oldPassInput.closest("form");
+  it("shows photo uploading state", async () => {
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: {
+        users: { ...baseUsersState, isChangeProfilePhoto: true },
+      },
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Mengunggah...")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("btn-change-photo")).toBeDisabled();
+  });
 
-    // Empty old password
-    fireEvent.submit(passwordForm);
-    expect(errorSpy).toHaveBeenCalledWith("Kata sandi lama wajib diisi!");
+  it("submits password change and resets fields on success", async () => {
+    changePasswordMock.mockImplementation(() => async () => true);
+    const user = userEvent.setup();
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: { users: baseUsersState },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("password-old")).toBeInTheDocument();
+    });
+    await user.type(screen.getByTestId("password-old"), "oldpass");
+    await user.type(screen.getByTestId("password-new"), "newpass1");
+    await user.type(screen.getByTestId("password-confirm"), "newpass1");
+    await user.click(screen.getByTestId("password-submit"));
+    await waitFor(() => {
+      expect(changePasswordMock).toHaveBeenCalledWith(
+        "oldpass",
+        "newpass1",
+        "newpass1"
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("password-old")).toHaveValue("");
+      expect(screen.getByTestId("password-new")).toHaveValue("");
+      expect(screen.getByTestId("password-confirm")).toHaveValue("");
+    });
+  });
 
-    // Short new password (<6)
-    fireEvent.change(oldPassInput, { target: { value: "old123" } });
-    fireEvent.change(newPassInput, { target: { value: "123" } });
-    fireEvent.submit(passwordForm);
-    expect(errorSpy).toHaveBeenCalledWith("Kata sandi baru minimal 6 karakter!");
+  it("does not reset password fields when change fails", async () => {
+    changePasswordMock.mockImplementation(() => async () => false);
+    const user = userEvent.setup();
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: { users: baseUsersState },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("password-old")).toBeInTheDocument();
+    });
+    await user.type(screen.getByTestId("password-old"), "oldpass");
+    await user.type(screen.getByTestId("password-new"), "newpass1");
+    await user.type(screen.getByTestId("password-confirm"), "newpass1");
+    await user.click(screen.getByTestId("password-submit"));
+    await waitFor(() => {
+      expect(changePasswordMock).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("password-old")).toHaveValue("oldpass");
+  });
 
-    // Confirmation mismatch
-    fireEvent.change(newPassInput, { target: { value: "password123" } });
-    fireEvent.change(confirmPassInput, { target: { value: "mismatch123" } });
-    fireEvent.submit(passwordForm);
-    expect(errorSpy).toHaveBeenCalledWith("Konfirmasi kata sandi tidak cocok!");
+  it("shows loading on password submit", async () => {
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: {
+        users: { ...baseUsersState, isChangeProfilePassword: true },
+      },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("password-submit")).toHaveTextContent(
+        "Menyimpan..."
+      );
+    });
+    expect(screen.getByTestId("password-submit")).toBeDisabled();
+  });
 
-    // Valid
-    fireEvent.change(confirmPassInput, { target: { value: "password123" } });
-    fireEvent.submit(passwordForm);
-    expect(putPasswordSpy).toHaveBeenCalledWith(
-      "old123",
-      "password123",
-      "password123"
+  it("fills empty string when profile name and email are null", async () => {
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: {
+        users: {
+          ...baseUsersState,
+          profile: {
+            id: 1,
+            name: null as unknown as string,
+            email: null as unknown as string,
+            photo: null,
+          },
+        },
+      },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-name")).toHaveValue("");
+      expect(screen.getByTestId("profile-email")).toHaveValue("");
+    });
+  });
+
+  it("uses photoPreview for img src after selecting a file", async () => {
+    global.URL.createObjectURL = vi.fn(() => "blob:preview-url");
+    const user = userEvent.setup();
+    renderWithProviders(<ProfilePage />, {
+      preloadedState: {
+        users: {
+          ...baseUsersState,
+          profile: {
+            id: 1,
+            name: "User",
+            email: "u@t.com",
+            photo: null,
+          },
+        },
+      },
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("photo-input")).toBeInTheDocument()
     );
-  });
-
-  it("should handle status flags from store", () => {
-    renderWithProviders(<ProfilePage />, {
-      preloadedState: {
-        profile: mockProfile,
-        isChangeProfile: true,
-        isChangeProfilePhoto: true,
-        isChangeProfilePassword: true,
-      },
+    const file = new File(["x"], "avatar.png", { type: "image/png" });
+    await user.upload(screen.getByTestId("photo-input"), file);
+    await waitFor(() => {
+      expect(screen.getByAltText("Foto profil")).toHaveAttribute(
+        "src",
+        "blob:preview-url"
+      );
     });
-
-    expect(screen.getByText("Profil Akun")).toBeInTheDocument();
   });
 });

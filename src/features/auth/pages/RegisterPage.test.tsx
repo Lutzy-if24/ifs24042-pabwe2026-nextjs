@@ -1,79 +1,123 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, fireEvent, act } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "@/test-utils";
 import RegisterPage from "./RegisterPage";
-import { renderWithProviders } from "../../../test-utils";
-import * as authAction from "../states/action";
 
-const mockPush = vi.fn();
+const replace = vi.fn();
+const asyncRegisterMock = vi.fn();
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockPush,
-    replace: vi.fn(),
-    back: vi.fn(),
-    prefetch: vi.fn(),
-  }),
-  usePathname: () => "/auth/register",
-  useParams: () => ({}),
+  useRouter: () => ({ replace }),
 }));
+
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
+vi.mock("@/features/auth/states/action", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/features/auth/states/action")>();
+  return {
+    ...actual,
+    asyncSetAuthRegister: (...args: unknown[]) => asyncRegisterMock(...args),
+  };
+});
 
 describe("RegisterPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    asyncRegisterMock.mockImplementation(() => async () => true);
   });
 
-  it("should render inputs and dispatch registration", () => {
-    const registerSpy = vi
-      .spyOn(authAction, "asyncSetIsAuthRegister")
-      .mockReturnValue(() => {});
+  it("renders form fields", () => {
+    renderWithProviders(<RegisterPage />);
+    expect(screen.getByTestId("register-name")).toBeInTheDocument();
+    expect(screen.getByTestId("register-email")).toBeInTheDocument();
+    expect(screen.getByTestId("register-password")).toBeInTheDocument();
+    expect(screen.getByTestId("register-submit")).toBeInTheDocument();
+  });
 
+  it("allows typing", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />);
+    await user.type(screen.getByTestId("register-name"), "User");
+    await user.type(screen.getByTestId("register-email"), "u@t.com");
+    await user.type(screen.getByTestId("register-password"), "123456");
+    expect(screen.getByTestId("register-name")).toHaveValue("User");
+    expect(screen.getByTestId("register-email")).toHaveValue("u@t.com");
+    expect(screen.getByTestId("register-password")).toHaveValue("123456");
+  });
+
+  it("does not dispatch when fields are empty", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    renderWithProviders(<RegisterPage />);
+    const form = screen.getByTestId("register-submit").closest("form")!;
+    fireEvent.submit(form);
+    expect(asyncRegisterMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches register and redirects on success", async () => {
+    asyncRegisterMock.mockImplementation(() => async () => true);
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />);
+    await user.type(screen.getByTestId("register-name"), "New User");
+    await user.type(screen.getByTestId("register-email"), "new@test.com");
+    await user.type(screen.getByTestId("register-password"), "secret1");
+    await user.click(screen.getByTestId("register-submit"));
+    await waitFor(() => {
+      expect(asyncRegisterMock).toHaveBeenCalledWith(
+        "New User",
+        "new@test.com",
+        "secret1"
+      );
+      expect(replace).toHaveBeenCalledWith("/auth/login");
+    });
+  });
+
+  it("does not redirect when register fails", async () => {
+    asyncRegisterMock.mockImplementation(() => async () => false);
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />);
+    await user.type(screen.getByTestId("register-name"), "New User");
+    await user.type(screen.getByTestId("register-email"), "new@test.com");
+    await user.type(screen.getByTestId("register-password"), "secret1");
+    await user.click(screen.getByTestId("register-submit"));
+    await waitFor(() => {
+      expect(asyncRegisterMock).toHaveBeenCalled();
+    });
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("shows loading text when isAuthRegister is true", () => {
     renderWithProviders(<RegisterPage />, {
       preloadedState: {
-        isAuthRegister: false,
+        auth: {
+          isAuthLogin: false,
+          isAuthRegister: true,
+          isAuthLogout: false,
+        },
       },
     });
-
-    const nameInput = screen.getByTestId("register-name-input");
-    const emailInput = screen.getByTestId("register-email-input");
-    const passwordInput = screen.getByTestId("register-password-input");
-    const submitBtn = screen.getByTestId("register-submit-button");
-
-    fireEvent.change(nameInput, { target: { value: "Delcom User" } });
-    fireEvent.change(emailInput, { target: { value: "user@delcom.org" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-    fireEvent.click(submitBtn);
-
-    expect(registerSpy).toHaveBeenCalledWith(
-      "Delcom User",
-      "user@delcom.org",
-      "password123"
+    expect(screen.getByTestId("register-submit")).toHaveTextContent(
+      "Memproses..."
     );
+    expect(screen.getByTestId("register-submit")).toBeDisabled();
   });
 
-  it("should reset form fields and navigate to /auth/login on isAuthRegister success", () => {
-    renderWithProviders(<RegisterPage />, {
-      preloadedState: {
-        isAuthRegister: true,
-      },
-    });
-
-    expect(screen.getByTestId("register-submit-button")).toBeInTheDocument();
-    expect(mockPush).toHaveBeenCalledWith("/auth/login");
-  });
-
-  it("should handle error state when isAuthRegister is false while loading", () => {
-    const { store } = renderWithProviders(<RegisterPage />, {
-      preloadedState: {
-        isAuthRegister: null,
-      },
-    });
-
-    const submitBtn = screen.getByTestId("register-submit-button");
-    fireEvent.click(submitBtn);
-
-    // Simulate action failure wrapped in act
-    act(() => {
-      store.dispatch(authAction.setIsAuthRegisterActionCreator(false));
-    });
-    expect(screen.getByTestId("register-submit-button")).toBeEnabled();
+  it("renders link to login", () => {
+    renderWithProviders(<RegisterPage />);
+    expect(screen.getByText("Masuk")).toBeInTheDocument();
   });
 });

@@ -1,26 +1,48 @@
-export type Todo = {
-  id: number;
-  title: string | null;
-  description: string | null;
-  is_finished: number;
-  cover?: string | null;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export type User = {
+export interface User {
   id: number;
   name: string;
   email: string;
+  email_verified_at?: string | null;
   photo?: string | null;
   created_at?: string;
-};
+  updated_at?: string;
+}
 
-export type ApiResult<T = unknown> = {
-  status?: string;
-  success?: boolean;
-  message?: string;
+export interface PostAuthor {
+  name: string;
+  photo?: string | null;
+}
+
+export interface PostComment {
+  id: number;
+  comment: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: number;
+  name?: string;
+  photo?: string | null;
+}
+
+export interface Post {
+  id: number;
+  user_id: number;
+  cover?: string | null;
+  description: string;
+  created_at?: string;
+  updated_at?: string;
+  author?: PostAuthor;
+  likes?: number[];
+  comments?: PostComment[] | number[];
+  my_comment?: PostComment | null;
+}
+
+export interface ApiResult<T = unknown> {
+  status: "success" | "fail";
+  message: string;
   data?: T;
-};
+}
 
-export type { RootState, AppDispatch } from "@/store";
+export interface LoginData {
+  user: User;
+  token: string;
+}

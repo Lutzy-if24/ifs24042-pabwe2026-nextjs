@@ -1,45 +1,79 @@
-const apiHelper = (() => {
-  async function fetchData(url: string, options: RequestInit = {}) {
-    const urlQuery = url.includes("?") ? url.split("?")[1] : "";
-    const urlWithoutQuery = url.replace(`?${urlQuery}`, "");
-    const fixUrl = urlWithoutQuery.endsWith("/")
-      ? urlWithoutQuery.slice(0, -1)
-      : urlWithoutQuery;
-    const fullUrl = fixUrl + (urlQuery ? `?${urlQuery}` : "");
+import { DELCOM_BASEURL } from "@/lib/config";
 
-    const token = getAccessToken();
-    const headers: Record<string, string> = {
-      ...((options.headers as Record<string, string>) || {}),
-    };
+const ACCESS_TOKEN_KEY = "accessToken";
 
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+export function getAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
 
-    return fetch(fullUrl, {
-      ...options,
-      mode: "cors",
-      headers,
+export function putAccessToken(token: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function removeAccessToken(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+}
+
+type FetchOptions = {
+  method?: string;
+  body?: BodyInit | null;
+  headers?: Record<string, string>;
+  isFormData?: boolean;
+  params?: Record<string, string | number | undefined | null>;
+};
+
+export async function fetchWithAuth(
+  endpoint: string,
+  options: FetchOptions = {}
+) {
+  const {
+    method = "GET",
+    body = null,
+    headers = {},
+    isFormData = false,
+    params,
+  } = options;
+
+  let url = `${DELCOM_BASEURL}${endpoint}`;
+
+  if (params) {
+    const search = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        search.append(key, String(value));
+      }
     });
+    const qs = search.toString();
+    if (qs) url += `?${qs}`;
   }
 
-  function putAccessToken(token: string | null | undefined) {
-    if (!token) {
-      localStorage.removeItem("accessToken");
-    } else {
-      localStorage.setItem("accessToken", token);
-    }
-  }
-
-  function getAccessToken() {
-    return localStorage.getItem("accessToken");
-  }
-
-  return {
-    fetchData,
-    putAccessToken,
-    getAccessToken,
+  const token = getAccessToken();
+  const finalHeaders: Record<string, string> = {
+    Accept: "application/json",
+    ...headers,
   };
-})();
 
-export default apiHelper;
+  if (token) {
+    finalHeaders.Authorization = `Bearer ${token}`;
+  }
+
+  if (!isFormData && body && !(body instanceof FormData)) {
+    finalHeaders["Content-Type"] = "application/json";
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers: finalHeaders,
+    body,
+  });
+
+  const data = await response.json().catch(() => ({
+    status: "fail",
+    message: "Gagal memproses respons server",
+  }));
+
+  return data;
+}

@@ -1,108 +1,136 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "@/test-utils";
 import UsersPage from "./UsersPage";
-import { renderWithProviders } from "../../../test-utils";
-import * as userAction from "../states/action";
+
+vi.mock("@/features/users/states/action", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/features/users/states/action")>();
+  return {
+    ...actual,
+    asyncSetUsers: () => async () => undefined,
+  };
+});
+
+const usersState = (
+  users: Array<{
+    id: number;
+    name: string;
+    email: string;
+    photo?: string | null;
+  }>
+) => ({
+  users: {
+    users,
+    user: null,
+    profile: null,
+    isProfile: false,
+    isChangeProfile: false,
+    isChangeProfilePhoto: false,
+    isChangeProfilePassword: false,
+  },
+});
 
 describe("UsersPage", () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-  const mockUsers = [
-    {
-      id: 1,
-      name: "Abdullah",
-      email: "abdullah@delcom.org",
-      photo: "https://example.com/photo.jpg",
-      created_at: "2024-10-05T02:53:38.000000Z",
-    },
-    {
-      id: 2,
-      name: "Ubaid",
-      email: "ubaid@delcom.org",
-      photo: null,
-      created_at: "2024-10-05T03:18:14.000000Z",
-    },
-    {
-      id: 3,
-      name: "",
-      email: "",
-      photo: null,
-      created_at: "2024-10-05T03:18:14.000000Z",
-    },
-  ];
-
-  it("should render users list, fallback initial avatar, and search users", () => {
-    renderWithProviders(<UsersPage />, {
-      preloadedState: {
-        users: mockUsers,
-      },
-    });
-
-    expect(screen.getByText("Semua Pengguna")).toBeInTheDocument();
-    expect(screen.getByText("Abdullah")).toBeInTheDocument();
-    expect(screen.getByText("Ubaid")).toBeInTheDocument();
-    expect(screen.getAllByText("U").length).toBeGreaterThan(0); // initial avatar fallback
-
-    const searchInput = screen.getByTestId("search-user-input");
-    fireEvent.change(searchInput, { target: { value: "abdullah" } });
-
-    expect(screen.getByText("Abdullah")).toBeInTheDocument();
-    expect(screen.queryByText("Ubaid")).not.toBeInTheDocument();
-  });
-
-  it("should handle state when users in store is null", () => {
-    renderWithProviders(<UsersPage />, {
-      preloadedState: {
-        users: null,
-      },
-    });
-
-    expect(screen.getByText("Semua Pengguna")).toBeInTheDocument();
-  });
-
-  it("should show empty state when no users found and not loading", async () => {
-    vi.spyOn(userAction, "asyncSetUsers").mockReturnValue(() => Promise.resolve());
-    renderWithProviders(<UsersPage />, {
-      preloadedState: {
-        users: [],
-      },
-    });
-
+  it("renders empty state", async () => {
+    renderWithProviders(<UsersPage />);
     await waitFor(() => {
-      expect(
-        screen.getByText("Tidak ada data pengguna ditemukan.")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("users-page")).toBeInTheDocument();
     });
+    expect(screen.getByText("Tidak ada pengguna")).toBeInTheDocument();
   });
 
-  it("should show loading indicator while users are being fetched", () => {
-    vi.spyOn(userAction, "asyncSetUsers").mockImplementation(
-      () => () => new Promise(() => {})
-    );
-
+  it("renders users without photo", async () => {
     renderWithProviders(<UsersPage />, {
-      preloadedState: {
-        users: [],
-      },
+      preloadedState: usersState([
+        { id: 1, name: "User One", email: "u@t.com" },
+      ]),
     });
-
-    expect(screen.getByText("Memuat daftar pengguna...")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
+    });
+    expect(screen.getByText("User One")).toBeInTheDocument();
+    expect(screen.getByText("u@t.com")).toBeInTheDocument();
   });
 
-  it("should not update loading state after unmount (isMounted guard)", async () => {
-    let resolveLoad;
-    const pendingPromise = new Promise((resolve) => {
-      resolveLoad = resolve;
+  it("renders users with photo", async () => {
+    renderWithProviders(<UsersPage />, {
+      preloadedState: usersState([
+        {
+          id: 2,
+          name: "Photo User",
+          email: "p@t.com",
+          photo: "https://example.com/photo.jpg",
+        },
+      ]),
     });
-    vi.spyOn(userAction, "asyncSetUsers").mockReturnValue(() => pendingPromise);
+    await waitFor(() => {
+      expect(screen.getByTestId("user-card-2")).toBeInTheDocument();
+    });
+    const img = screen.getByAltText("Photo User");
+    expect(img).toHaveAttribute("src", "https://example.com/photo.jpg");
+  });
 
-    const { unmount } = renderWithProviders(<UsersPage />, {
-      preloadedState: { users: [] },
+  it("filters users by name search", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />, {
+      preloadedState: usersState([
+        { id: 1, name: "Alice", email: "alice@t.com" },
+        { id: 2, name: "Bob", email: "bob@t.com" },
+      ]),
     });
-    unmount();
-    resolveLoad();
-    await pendingPromise;
-    // No error = isMounted guard correctly prevents setState after unmount
+    await waitFor(() => {
+      expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
+    });
+    await user.type(screen.getByTestId("users-search"), "bob");
+    expect(screen.queryByTestId("user-card-1")).not.toBeInTheDocument();
+    expect(screen.getByTestId("user-card-2")).toBeInTheDocument();
+  });
+
+  it("filters users by email search", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />, {
+      preloadedState: usersState([
+        { id: 1, name: "Alice", email: "alice@t.com" },
+        { id: 2, name: "Bob", email: "bob@t.com" },
+      ]),
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
+    });
+    await user.type(screen.getByTestId("users-search"), "alice@");
+    expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-card-2")).not.toBeInTheDocument();
+  });
+
+  it("shows empty when search has no match", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />, {
+      preloadedState: usersState([
+        { id: 1, name: "Alice", email: "alice@t.com" },
+      ]),
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
+    });
+    await user.type(screen.getByTestId("users-search"), "zzz");
+    expect(screen.getByText("Tidak ada pengguna")).toBeInTheDocument();
+  });
+
+  it("shows all users when search is cleared", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<UsersPage />, {
+      preloadedState: usersState([
+        { id: 1, name: "Alice", email: "alice@t.com" },
+      ]),
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
+    });
+    const input = screen.getByTestId("users-search");
+    await user.type(input, "x");
+    await user.clear(input);
+    expect(screen.getByTestId("user-card-1")).toBeInTheDocument();
   });
 });

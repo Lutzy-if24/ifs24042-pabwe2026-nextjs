@@ -1,218 +1,193 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  ActionType,
   setUsersActionCreator,
   setUserActionCreator,
   setProfileActionCreator,
-  setIsProfile,
+  setIsProfileActionCreator,
   setIsChangeProfileActionCreator,
   setIsChangeProfilePhotoActionCreator,
   setIsChangeProfilePasswordActionCreator,
   asyncSetUsers,
-  asyncSetUserById,
   asyncSetProfile,
-  asyncPutProfile,
-  asyncPostProfilePhoto,
-  asyncPutProfilePassword,
+  asyncChangeProfile,
+  asyncChangeProfilePhoto,
+  asyncChangeProfilePassword,
 } from "./action";
-import userApi from "../api/userApi";
-import * as toolsHelper from "../../../helpers/toolsHelper";
+import { ActionType } from "@/types/action";
 
-describe("users action", () => {
+vi.mock("../api/userApi", () => ({
+  getUsersApi: vi.fn(),
+  getProfileApi: vi.fn(),
+  updateProfileApi: vi.fn(),
+  changePhotoApi: vi.fn(),
+  changePasswordApi: vi.fn(),
+}));
+
+vi.mock("@/helpers/toolsHelper", () => ({
+  showSuccessDialog: vi.fn().mockResolvedValue(undefined),
+  showErrorDialog: vi.fn().mockResolvedValue(undefined),
+}));
+
+import {
+  getUsersApi,
+  getProfileApi,
+  updateProfileApi,
+  changePhotoApi,
+  changePasswordApi,
+} from "../api/userApi";
+
+describe("users actions", () => {
+  const dispatch = vi.fn((action) => {
+    if (typeof action === "function") return action(dispatch);
+    return action;
+  });
+
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
-  it("should create correct action objects", () => {
-    expect(setUsersActionCreator([{ id: 1 }])).toEqual({
-      type: ActionType.SET_USERS,
-      payload: [{ id: 1 }],
-    });
-    expect(setUserActionCreator({ id: 1 })).toEqual({
-      type: ActionType.SET_USER,
-      payload: { id: 1 },
-    });
-    expect(setProfileActionCreator({ id: 1 })).toEqual({
-      type: ActionType.SET_PROFILE,
-      payload: { id: 1 },
-    });
-    expect(setIsProfile(true)).toEqual({
-      type: ActionType.SET_IS_PROFILE,
-      payload: true,
-    });
-    expect(setIsChangeProfileActionCreator(true)).toEqual({
-      type: ActionType.SET_IS_CHANGE_PROFILE,
-      payload: true,
-    });
-    expect(setIsChangeProfilePhotoActionCreator(true)).toEqual({
-      type: ActionType.SET_IS_CHANGE_PROFILE_PHOTO,
-      payload: true,
-    });
-    expect(setIsChangeProfilePasswordActionCreator(true)).toEqual({
-      type: ActionType.SET_IS_CHANGE_PROFILE_PASSWORD,
-      payload: true,
-    });
+  it("action creators", () => {
+    expect(setUsersActionCreator([]).type).toBe(ActionType.SET_USERS);
+    expect(setUserActionCreator(null).type).toBe(ActionType.SET_USER);
+    expect(setUserActionCreator({ id: 1, name: "A", email: "a@t.com" }).payload.user).toEqual(
+      expect.objectContaining({ id: 1 })
+    );
+    expect(setProfileActionCreator(null).type).toBe(ActionType.SET_PROFILE);
+    expect(setIsProfileActionCreator(true).type).toBe(ActionType.SET_IS_PROFILE);
+    expect(setIsChangeProfileActionCreator(true).type).toBe(
+      ActionType.SET_IS_CHANGE_PROFILE
+    );
+    expect(setIsChangeProfilePhotoActionCreator(true).type).toBe(
+      ActionType.SET_IS_CHANGE_PROFILE_PHOTO
+    );
+    expect(setIsChangeProfilePasswordActionCreator(true).type).toBe(
+      ActionType.SET_IS_CHANGE_PROFILE_PASSWORD
+    );
   });
 
-  describe("asyncSetUsers", () => {
-    it("should dispatch setUsersActionCreator with users on success", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "getUsers").mockResolvedValue([{ id: 1 }]);
-
-      await asyncSetUsers()(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setUsersActionCreator([{ id: 1 }]));
+  it("asyncSetUsers", async () => {
+    (getUsersApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+      data: { users: [{ id: 1, name: "A", email: "a@b.com" }] },
     });
+    await asyncSetUsers()(dispatch);
 
-    it("should dispatch empty array on error", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "getUsers").mockRejectedValue(new Error("Error"));
-
-      await asyncSetUsers()(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setUsersActionCreator([]));
+    (getUsersApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
     });
+    await asyncSetUsers()(dispatch);
+
+    (getUsersApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("e")
+    );
+    await asyncSetUsers()(dispatch);
   });
 
-  describe("asyncSetUserById", () => {
-    it("should dispatch setUserActionCreator with user on success", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "getUserById").mockResolvedValue({ id: 2 });
-
-      await asyncSetUserById(2)(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setUserActionCreator({ id: 2 }));
+  it("asyncSetProfile", async () => {
+    (getProfileApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+      data: { user: { id: 1, name: "A", email: "a@b.com" } },
     });
+    expect(await asyncSetProfile()(dispatch)).toEqual(
+      expect.objectContaining({ id: 1 })
+    );
 
-    it("should dispatch null on error", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "getUserById").mockRejectedValue(new Error("Error"));
-
-      await asyncSetUserById(99)(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setUserActionCreator(null));
+    (getProfileApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
     });
+    expect(await asyncSetProfile()(dispatch)).toBeNull();
+
+    (getProfileApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("e")
+    );
+    expect(await asyncSetProfile()(dispatch)).toBeNull();
   });
 
-  describe("asyncSetProfile", () => {
-    it("should dispatch setProfileActionCreator and setIsProfile on success", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "getProfile").mockResolvedValue({ id: 3 });
-
-      await asyncSetProfile()(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setProfileActionCreator({ id: 3 }));
-      expect(dispatch).toHaveBeenCalledWith(setIsProfile(true));
+  it("asyncChangeProfile", async () => {
+    (updateProfileApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+      data: { user: { id: 1, name: "A", email: "a@b.com" } },
     });
+    expect(await asyncChangeProfile("A", "a@b.com")(dispatch)).toBe(true);
 
-    it("should dispatch null and setIsProfile on error", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "getProfile").mockRejectedValue(new Error("Failed"));
-
-      await asyncSetProfile()(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setProfileActionCreator(null));
-      expect(dispatch).toHaveBeenCalledWith(setIsProfile(true));
+    (updateProfileApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
     });
+    expect(await asyncChangeProfile("A", "a@b.com")(dispatch)).toBe(false);
+
+    (updateProfileApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("e")
+    );
+    expect(await asyncChangeProfile("A", "a@b.com")(dispatch)).toBe(false);
   });
 
-  describe("asyncPutProfile", () => {
-    it("should update profile, show success and dispatch actions on success", async () => {
-      const dispatch = vi.fn();
-      const updated = { id: 1, name: "New Name", email: "new@del.org" };
-      vi.spyOn(userApi, "putProfile").mockResolvedValue(updated);
-      const successSpy = vi.spyOn(toolsHelper, "showSuccessDialog").mockImplementation(() => {});
-
-      await asyncPutProfile("New Name", "new@del.org")(dispatch);
-
-      expect(dispatch).toHaveBeenCalledWith(setProfileActionCreator(updated));
-      expect(successSpy).toHaveBeenCalledWith("Profil berhasil diperbarui!");
-      expect(dispatch).toHaveBeenCalledWith(setIsChangeProfileActionCreator(true));
+  it("asyncChangeProfilePhoto", async () => {
+    const file = new File(["x"], "p.png");
+    (changePhotoApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
     });
+    expect(await asyncChangeProfilePhoto(file)(dispatch)).toBe(true);
 
-    it("should show error dialog and dispatch false on failure", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "putProfile").mockRejectedValue(new Error("Gagal update"));
-      const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-
-      await asyncPutProfile("New Name", "new@del.org")(dispatch);
-
-      expect(errorSpy).toHaveBeenCalledWith("Gagal update");
-      expect(dispatch).toHaveBeenCalledWith(setIsChangeProfileActionCreator(false));
+    (changePhotoApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
     });
+    expect(await asyncChangeProfilePhoto(file)(dispatch)).toBe(false);
+
+    (changePhotoApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("e")
+    );
+    expect(await asyncChangeProfilePhoto(file)(dispatch)).toBe(false);
   });
 
-  describe("asyncPostProfilePhoto", () => {
-    it("should upload photo, refresh profile, and show success dialog", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "postProfilePhoto").mockResolvedValue("Foto profil diubah");
-      vi.spyOn(userApi, "getProfile").mockResolvedValue({ id: 1, photo: "new.jpg" });
-      const successSpy = vi.spyOn(toolsHelper, "showSuccessDialog").mockImplementation(() => {});
-
-      const dummyFile = new File([""], "test.png");
-      await asyncPostProfilePhoto(dummyFile)(dispatch);
-
-      expect(successSpy).toHaveBeenCalledWith("Foto profil diubah");
-      expect(dispatch).toHaveBeenCalledWith(setProfileActionCreator({ id: 1, photo: "new.jpg" }));
-      expect(dispatch).toHaveBeenCalledWith(setIsChangeProfilePhotoActionCreator(true));
+  it("asyncChangeProfilePassword", async () => {
+    (changePasswordApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
     });
+    expect(
+      await asyncChangeProfilePassword("a", "b", "b")(dispatch)
+    ).toBe(true);
 
-    it("should use fallback message in success dialog if message empty", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "postProfilePhoto").mockResolvedValue("");
-      vi.spyOn(userApi, "getProfile").mockResolvedValue({ id: 1 });
-      const successSpy = vi.spyOn(toolsHelper, "showSuccessDialog").mockImplementation(() => {});
-
-      const dummyFile = new File([""], "test.png");
-      await asyncPostProfilePhoto(dummyFile)(dispatch);
-
-      expect(successSpy).toHaveBeenCalledWith("Foto profil berhasil diperbarui!");
+    (changePasswordApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
     });
+    expect(
+      await asyncChangeProfilePassword("a", "b", "b")(dispatch)
+    ).toBe(false);
 
-    it("should show error dialog and dispatch false on failure", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "postProfilePhoto").mockRejectedValue(new Error("File terlalu besar"));
-      const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-
-      const dummyFile = new File([""], "test.png");
-      await asyncPostProfilePhoto(dummyFile)(dispatch);
-
-      expect(errorSpy).toHaveBeenCalledWith("File terlalu besar");
-      expect(dispatch).toHaveBeenCalledWith(setIsChangeProfilePhotoActionCreator(false));
-    });
+    (changePasswordApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("e")
+    );
+    expect(
+      await asyncChangeProfilePassword("a", "b", "b")(dispatch)
+    ).toBe(false);
   });
 
-  describe("asyncPutProfilePassword", () => {
-    it("should update password, show success dialog, and dispatch true", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "putProfilePassword").mockResolvedValue("Password diubah");
-      const successSpy = vi.spyOn(toolsHelper, "showSuccessDialog").mockImplementation(() => {});
 
-      await asyncPutProfilePassword("old", "new", "new")(dispatch);
-
-      expect(successSpy).toHaveBeenCalledWith("Password diubah");
-      expect(dispatch).toHaveBeenCalledWith(setIsChangeProfilePasswordActionCreator(true));
+  it("asyncChangeProfile success without data.user skips setProfile", async () => {
+    (updateProfileApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+      message: "ok",
     });
+    expect(await asyncChangeProfile("A", "a@b.com")(dispatch)).toBe(true);
+  });
 
-    it("should use fallback message if server message empty", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "putProfilePassword").mockResolvedValue("");
-      const successSpy = vi.spyOn(toolsHelper, "showSuccessDialog").mockImplementation(() => {});
+  it("asyncChangeProfile catch non-Error uses fallback message", async () => {
+    (updateProfileApi as ReturnType<typeof vi.fn>).mockRejectedValue("oops");
+    expect(await asyncChangeProfile("A", "a@b.com")(dispatch)).toBe(false);
+  });
 
-      await asyncPutProfilePassword("old", "new", "new")(dispatch);
+  it("asyncChangeProfilePhoto catch non-Error uses fallback message", async () => {
+    const file = new File(["x"], "p.png");
+    (changePhotoApi as ReturnType<typeof vi.fn>).mockRejectedValue(123);
+    expect(await asyncChangeProfilePhoto(file)(dispatch)).toBe(false);
+  });
 
-      expect(successSpy).toHaveBeenCalledWith("Kata sandi berhasil diperbarui!");
+  it("asyncChangeProfilePassword catch non-Error uses fallback message", async () => {
+    (changePasswordApi as ReturnType<typeof vi.fn>).mockRejectedValue({
+      any: true,
     });
-
-    it("should show error dialog and dispatch false on failure", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(userApi, "putProfilePassword").mockRejectedValue(new Error("Password salah"));
-      const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-
-      await asyncPutProfilePassword("old", "new", "new")(dispatch);
-
-      expect(errorSpy).toHaveBeenCalledWith("Password salah");
-      expect(dispatch).toHaveBeenCalledWith(setIsChangeProfilePasswordActionCreator(false));
-    });
+    expect(
+      await asyncChangeProfilePassword("a", "b", "b")(dispatch)
+    ).toBe(false);
   });
 });

@@ -1,143 +1,166 @@
-import { showErrorDialog, showSuccessDialog } from "../../../helpers/toolsHelper";
-import userApi from "../api/userApi";
+import { ActionType } from "@/types/action";
+import {
+  getUsersApi,
+  getProfileApi,
+  updateProfileApi,
+  changePhotoApi,
+  changePasswordApi,
+} from "../api/userApi";
+import { showErrorDialog, showSuccessDialog } from "@/helpers/toolsHelper";
+import type { AppDispatch } from "@/store";
+import type { User } from "@/types";
 
-export const ActionType = {
-  SET_USERS: "SET_USERS",
-  SET_USER: "SET_USER",
-  SET_PROFILE: "SET_PROFILE",
-  SET_IS_PROFILE: "SET_IS_PROFILE",
-  SET_IS_CHANGE_PROFILE: "SET_IS_CHANGE_PROFILE",
-  SET_IS_CHANGE_PROFILE_PHOTO: "SET_IS_CHANGE_PROFILE_PHOTO",
-  SET_IS_CHANGE_PROFILE_PASSWORD: "SET_IS_CHANGE_PROFILE_PASSWORD",
-};
+export function setUsersActionCreator(users: User[]) {
+  return { type: ActionType.SET_USERS, payload: { users } };
+}
 
-// Get all users
-export function setUsersActionCreator(users) {
+export function setUserActionCreator(user: User | null) {
+  return { type: ActionType.SET_USER, payload: { user } };
+}
+
+export function setProfileActionCreator(profile: User | null) {
+  return { type: ActionType.SET_PROFILE, payload: { profile } };
+}
+
+export function setIsProfileActionCreator(isProfile: boolean) {
+  return { type: ActionType.SET_IS_PROFILE, payload: { isProfile } };
+}
+
+export function setIsChangeProfileActionCreator(isChangeProfile: boolean) {
   return {
-    type: ActionType.SET_USERS,
-    payload: users,
+    type: ActionType.SET_IS_CHANGE_PROFILE,
+    payload: { isChangeProfile },
+  };
+}
+
+export function setIsChangeProfilePhotoActionCreator(
+  isChangeProfilePhoto: boolean
+) {
+  return {
+    type: ActionType.SET_IS_CHANGE_PROFILE_PHOTO,
+    payload: { isChangeProfilePhoto },
+  };
+}
+
+export function setIsChangeProfilePasswordActionCreator(
+  isChangeProfilePassword: boolean
+) {
+  return {
+    type: ActionType.SET_IS_CHANGE_PROFILE_PASSWORD,
+    payload: { isChangeProfilePassword },
   };
 }
 
 export function asyncSetUsers() {
-  return async (dispatch) => {
+  return async (dispatch: AppDispatch) => {
     try {
-      const users = await userApi.getUsers();
-      dispatch(setUsersActionCreator(users));
-    } catch (error) {
+      const result = await getUsersApi();
+      if (result.status === "success" && result.data?.users) {
+        dispatch(setUsersActionCreator(result.data.users));
+      } else {
+        dispatch(setUsersActionCreator([]));
+      }
+    } catch {
       dispatch(setUsersActionCreator([]));
     }
   };
 }
 
-// Get user by ID
-export function setUserActionCreator(user) {
-  return {
-    type: ActionType.SET_USER,
-    payload: user,
-  };
-}
-
-export function asyncSetUserById(userId) {
-  return async (dispatch) => {
-    try {
-      const user = await userApi.getUserById(userId);
-      dispatch(setUserActionCreator(user));
-    } catch (error) {
-      dispatch(setUserActionCreator(null));
-    }
-  };
-}
-
-// Get user profile
-export function setProfileActionCreator(profile) {
-  return {
-    type: ActionType.SET_PROFILE,
-    payload: profile,
-  };
-}
-
-export function setIsProfile(isProfile) {
-  return {
-    type: ActionType.SET_IS_PROFILE,
-    payload: isProfile,
-  };
-}
-
 export function asyncSetProfile() {
-  return async (dispatch) => {
+  return async (dispatch: AppDispatch) => {
+    dispatch(setIsProfileActionCreator(true));
     try {
-      const profile = await userApi.getProfile();
-      dispatch(setProfileActionCreator(profile));
-    } catch (error) {
+      const result = await getProfileApi();
+      if (result.status === "success" && result.data?.user) {
+        dispatch(setProfileActionCreator(result.data.user));
+        return result.data.user;
+      }
       dispatch(setProfileActionCreator(null));
+      return null;
+    } catch {
+      dispatch(setProfileActionCreator(null));
+      return null;
     } finally {
-      dispatch(setIsProfile(true));
+      dispatch(setIsProfileActionCreator(false));
     }
   };
 }
 
-// Put profile
-export function setIsChangeProfileActionCreator(isChange) {
-  return {
-    type: ActionType.SET_IS_CHANGE_PROFILE,
-    payload: isChange,
-  };
-}
-
-export function asyncPutProfile(name, email) {
-  return async (dispatch) => {
+export function asyncChangeProfile(name: string, email: string) {
+  return async (dispatch: AppDispatch) => {
+    dispatch(setIsChangeProfileActionCreator(true));
     try {
-      const profile = await userApi.putProfile(name, email);
-      dispatch(setProfileActionCreator(profile));
-      showSuccessDialog("Profil berhasil diperbarui!");
-      dispatch(setIsChangeProfileActionCreator(true));
-    } catch (error) {
-      showErrorDialog(error.message);
+      const result = await updateProfileApi(name, email);
+      if (result.status === "success") {
+        await showSuccessDialog(result.message || "Berhasil mengubah profil");
+        if (result.data?.user) {
+          dispatch(setProfileActionCreator(result.data.user));
+        }
+        return true;
+      }
+      await showErrorDialog(result.message || "Gagal mengubah profil");
+      return false;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Terjadi kesalahan";
+      await showErrorDialog(message);
+      return false;
+    } finally {
       dispatch(setIsChangeProfileActionCreator(false));
     }
   };
 }
 
-// Post profile photo
-export function setIsChangeProfilePhotoActionCreator(isChange) {
-  return {
-    type: ActionType.SET_IS_CHANGE_PROFILE_PHOTO,
-    payload: isChange,
-  };
-}
-
-export function asyncPostProfilePhoto(photo) {
-  return async (dispatch) => {
+export function asyncChangeProfilePhoto(file: File) {
+  return async (dispatch: AppDispatch) => {
+    dispatch(setIsChangeProfilePhotoActionCreator(true));
     try {
-      const message = await userApi.postProfilePhoto(photo);
-      showSuccessDialog(message || "Foto profil berhasil diperbarui!");
-      const profile = await userApi.getProfile();
-      dispatch(setProfileActionCreator(profile));
-      dispatch(setIsChangeProfilePhotoActionCreator(true));
-    } catch (error) {
-      showErrorDialog(error.message);
+      const result = await changePhotoApi(file);
+      if (result.status === "success") {
+        await showSuccessDialog(result.message || "Berhasil mengubah foto");
+        dispatch(asyncSetProfile());
+        return true;
+      }
+      await showErrorDialog(result.message || "Gagal mengubah foto");
+      return false;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Terjadi kesalahan";
+      await showErrorDialog(message);
+      return false;
+    } finally {
       dispatch(setIsChangeProfilePhotoActionCreator(false));
     }
   };
 }
 
-// Put profile password
-export function setIsChangeProfilePasswordActionCreator(isChange) {
-  return {
-    type: ActionType.SET_IS_CHANGE_PROFILE_PASSWORD,
-    payload: isChange,
-  };
-}
-
-export function asyncPutProfilePassword(oldPassword, newPassword, newPasswordConfirmation) {
-  return async (dispatch) => {
+export function asyncChangeProfilePassword(
+  password: string,
+  newPassword: string,
+  newPasswordConfirmation: string
+) {
+  return async (dispatch: AppDispatch) => {
+    dispatch(setIsChangeProfilePasswordActionCreator(true));
     try {
-      const message = await userApi.putProfilePassword(oldPassword, newPassword, newPasswordConfirmation);
-      showSuccessDialog(message || "Kata sandi berhasil diperbarui!");
-      dispatch(setIsChangeProfilePasswordActionCreator(true));
-    } catch (error) {
-      showErrorDialog(error.message);
+      const result = await changePasswordApi(
+        password,
+        newPassword,
+        newPasswordConfirmation
+      );
+      if (result.status === "success") {
+        await showSuccessDialog(
+          result.message || "Berhasil mengubah kata sandi"
+        );
+        return true;
+      }
+      await showErrorDialog(result.message || "Gagal mengubah kata sandi");
+      return false;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Terjadi kesalahan";
+      await showErrorDialog(message);
+      return false;
+    } finally {
       dispatch(setIsChangeProfilePasswordActionCreator(false));
     }
   };

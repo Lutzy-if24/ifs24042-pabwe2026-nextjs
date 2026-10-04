@@ -1,80 +1,34 @@
-import apiHelper from "../../../helpers/apiHelper";
-import { DELCOM_BASEURL } from "@/lib/config";
+import { fetchWithAuth, putAccessToken, removeAccessToken } from "@/helpers/apiHelper";
+import type { ApiResult, LoginData } from "@/types";
 
-const authApi = (() => {
-  const BASE_URL = `${DELCOM_BASEURL}/auth`;
+export async function loginApi(email: string, password: string) {
+  const result = (await fetchWithAuth("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  })) as ApiResult<LoginData>;
 
-  function _url(path) {
-    return BASE_URL + path;
+  if (result.status === "success" && result.data?.token) {
+    putAccessToken(result.data.token);
   }
 
-  async function postRegister(name, email, password) {
-    const response = await apiHelper.fetchData(_url("/register"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-      }),
-    });
+  return result;
+}
 
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      const errorDetails =
-        result.data && typeof result.data === "object"
-          ? Object.values(result.data).flat().join(", ")
-          : "";
-      const baseMsg = result.message || "Gagal melakukan pendaftaran";
-      throw new Error(errorDetails ? `${baseMsg}: ${errorDetails}` : baseMsg);
-    }
+export async function registerApi(
+  name: string,
+  email: string,
+  password: string
+) {
+  return (await fetchWithAuth("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
+  })) as ApiResult;
+}
 
-    return result.message;
-  }
-
-  async function postLogin(email, password) {
-    const response = await apiHelper.fetchData(_url("/login"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal login");
-    }
-
-    return result.data;
-  }
-
-  async function postLogout() {
-    const response = await apiHelper.fetchData(_url("/logout"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const result = await response.json();
-    if (result.status !== "success" && !result.success) {
-      throw new Error(result.message || "Gagal logout");
-    }
-
-    return result.message;
-  }
-
-  return {
-    postRegister,
-    postLogin,
-    postLogout,
-  };
-})();
-
-export default authApi;
+export async function logoutApi() {
+  const result = (await fetchWithAuth("/auth/logout", {
+    method: "POST",
+  })) as ApiResult;
+  removeAccessToken();
+  return result;
+}

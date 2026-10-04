@@ -3,26 +3,30 @@ import { renderHook, act } from "@testing-library/react";
 import useInput from "./useInput";
 
 describe("useInput", () => {
-  it("should initialize with default value and change value on change handler", () => {
-    const { result } = renderHook(() => useInput("initial"));
-
-    expect(result.current[0]).toBe("initial");
-
-    act(() => {
-      result.current[1]({ target: { value: "updated" } });
-    });
-
-    expect(result.current[0]).toBe("updated");
-
-    act(() => {
-      result.current[2]("direct");
-    });
-
-    expect(result.current[0]).toBe("direct");
+  it("returns default value", () => {
+    const { result } = renderHook(() => useInput("hello"));
+    expect(result.current[0]).toBe("hello");
   });
 
-  it("should initialize with empty string when no default given", () => {
-    const { result } = renderHook(() => useInput());
-    expect(result.current[0]).toBe("");
+  it("updates value on change", () => {
+    const { result } = renderHook(() => useInput(""));
+    act(() => {
+      result.current[1]({
+        target: { value: "test" },
+      } as React.ChangeEvent<HTMLInputElement>);
+    });
+    expect(result.current[0]).toBe("test");
+  });
+
+  it("resets value", () => {
+    const { result } = renderHook(() => useInput("default"));
+    act(() => {
+      result.current[2]("changed");
+    });
+    expect(result.current[0]).toBe("changed");
+    act(() => {
+      result.current[3]();
+    });
+    expect(result.current[0]).toBe("default");
   });
 });

@@ -1,106 +1,173 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  ActionType,
-  setIsAuthLoginActionCreator,
-  setIsAuthRegisterActionCreator,
-  setIsAuthLogoutActionCreator,
-  asyncSetIsAuthLogin,
-  asyncSetIsAuthRegister,
-  asyncSetIsAuthLogout,
+  setAuthLoginActionCreator,
+  setAuthRegisterActionCreator,
+  setAuthLogoutActionCreator,
+  asyncSetAuthLogin,
+  asyncSetAuthRegister,
+  asyncSetAuthLogout,
 } from "./action";
-import authApi from "../api/authApi";
-import apiHelper from "../../../helpers/apiHelper";
-import * as toolsHelper from "../../../helpers/toolsHelper";
+import { ActionType } from "@/types/action";
 
-describe("auth action", () => {
+vi.mock("../api/authApi", () => ({
+  loginApi: vi.fn(),
+  registerApi: vi.fn(),
+  logoutApi: vi.fn(),
+}));
+
+vi.mock("@/helpers/toolsHelper", () => ({
+  showSuccessDialog: vi.fn().mockResolvedValue(undefined),
+  showErrorDialog: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { loginApi, registerApi, logoutApi } from "../api/authApi";
+import { showSuccessDialog, showErrorDialog } from "@/helpers/toolsHelper";
+
+describe("auth actions", () => {
+  const dispatch = vi.fn();
+
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
-  it("should create correct action objects", () => {
-    expect(setIsAuthLoginActionCreator(true)).toEqual({
-      type: ActionType.SET_IS_AUTH_LOGIN,
-      payload: true,
-    });
-    expect(setIsAuthRegisterActionCreator(true)).toEqual({
-      type: ActionType.SET_IS_AUTH_REGISTER,
-      payload: true,
-    });
-    expect(setIsAuthLogoutActionCreator(true)).toEqual({
-      type: ActionType.SET_IS_AUTH_LOGOUT,
-      payload: true,
-    });
+  it("action creators", () => {
+    expect(setAuthLoginActionCreator(true).type).toBe(
+      ActionType.SET_AUTH_LOGIN
+    );
+    expect(setAuthLoginActionCreator(true).payload.isAuthLogin).toBe(true);
+    expect(setAuthRegisterActionCreator(true).type).toBe(
+      ActionType.SET_AUTH_REGISTER
+    );
+    expect(setAuthLogoutActionCreator(true).type).toBe(
+      ActionType.SET_AUTH_LOGOUT
+    );
   });
 
-  describe("asyncSetIsAuthLogin", () => {
-    it("should dispatch success and store token on successful login", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(authApi, "postLogin").mockResolvedValue({ token: "jwt-123" });
-      const putTokenSpy = vi.spyOn(apiHelper, "putAccessToken").mockImplementation(() => {});
-
-      await asyncSetIsAuthLogin("email@del.org", "password")(dispatch);
-
-      expect(putTokenSpy).toHaveBeenCalledWith("jwt-123");
-      expect(dispatch).toHaveBeenCalledWith(setIsAuthLoginActionCreator(true));
+  it("asyncSetAuthLogin success with message", async () => {
+    (loginApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+      message: "ok",
     });
-
-    it("should dispatch false and show error on login failure", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(authApi, "postLogin").mockRejectedValue(new Error("Login gagal"));
-      const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-
-      await asyncSetIsAuthLogin("email@del.org", "wrong")(dispatch);
-
-      expect(errorSpy).toHaveBeenCalledWith("Login gagal");
-      expect(dispatch).toHaveBeenCalledWith(setIsAuthLoginActionCreator(false));
-    });
+    const result = await asyncSetAuthLogin("a@b.com", "pass")(dispatch);
+    expect(result).toBe(true);
+    expect(showSuccessDialog).toHaveBeenCalledWith("ok");
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: ActionType.SET_AUTH_LOGIN })
+    );
   });
 
-  describe("asyncSetIsAuthRegister", () => {
-    it("should dispatch success and show success dialog on registration success", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(authApi, "postRegister").mockResolvedValue("Registrasi Berhasil");
-      const successSpy = vi.spyOn(toolsHelper, "showSuccessDialog").mockImplementation(() => {});
-
-      await asyncSetIsAuthRegister("Name", "name@del.org", "pass")(dispatch);
-
-      expect(successSpy).toHaveBeenCalledWith("Registrasi Berhasil");
-      expect(dispatch).toHaveBeenCalledWith(setIsAuthRegisterActionCreator(true));
+  it("asyncSetAuthLogin success without message uses fallback", async () => {
+    (loginApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
     });
-
-    it("should dispatch false and show error dialog on registration failure", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(authApi, "postRegister").mockRejectedValue(new Error("Email sudah terdaftar"));
-      const errorSpy = vi.spyOn(toolsHelper, "showErrorDialog").mockImplementation(() => {});
-
-      await asyncSetIsAuthRegister("Name", "name@del.org", "pass")(dispatch);
-
-      expect(errorSpy).toHaveBeenCalledWith("Email sudah terdaftar");
-      expect(dispatch).toHaveBeenCalledWith(setIsAuthRegisterActionCreator(false));
-    });
+    const result = await asyncSetAuthLogin("a@b.com", "pass")(dispatch);
+    expect(result).toBe(true);
+    expect(showSuccessDialog).toHaveBeenCalledWith("Berhasil login");
   });
 
-  describe("asyncSetIsAuthLogout", () => {
-    it("should clear token and dispatch logout action when logout succeeds", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(authApi, "postLogout").mockResolvedValue("Berhasil logout");
-      const putTokenSpy = vi.spyOn(apiHelper, "putAccessToken").mockImplementation(() => {});
-
-      await asyncSetIsAuthLogout()(dispatch);
-
-      expect(putTokenSpy).toHaveBeenCalledWith("");
-      expect(dispatch).toHaveBeenCalledWith(setIsAuthLogoutActionCreator(true));
+  it("asyncSetAuthLogin fail with message", async () => {
+    (loginApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
+      message: "err",
     });
+    const result = await asyncSetAuthLogin("a@b.com", "pass")(dispatch);
+    expect(result).toBe(false);
+    expect(showErrorDialog).toHaveBeenCalledWith("err");
+  });
 
-    it("should still clear token and dispatch logout action even if api throws error", async () => {
-      const dispatch = vi.fn();
-      vi.spyOn(authApi, "postLogout").mockRejectedValue(new Error("Network fail"));
-      const putTokenSpy = vi.spyOn(apiHelper, "putAccessToken").mockImplementation(() => {});
-
-      await asyncSetIsAuthLogout()(dispatch);
-
-      expect(putTokenSpy).toHaveBeenCalledWith("");
-      expect(dispatch).toHaveBeenCalledWith(setIsAuthLogoutActionCreator(true));
+  it("asyncSetAuthLogin fail without message uses fallback", async () => {
+    (loginApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
     });
+    const result = await asyncSetAuthLogin("a@b.com", "pass")(dispatch);
+    expect(result).toBe(false);
+    expect(showErrorDialog).toHaveBeenCalledWith("Gagal login");
+  });
+
+  it("asyncSetAuthLogin throw Error uses error.message", async () => {
+    (loginApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("network")
+    );
+    const result = await asyncSetAuthLogin("a@b.com", "pass")(dispatch);
+    expect(result).toBe(false);
+    expect(showErrorDialog).toHaveBeenCalledWith("network");
+  });
+
+  it("asyncSetAuthLogin throw non-Error uses fallback message", async () => {
+    (loginApi as ReturnType<typeof vi.fn>).mockRejectedValue("string-error");
+    const result = await asyncSetAuthLogin("a@b.com", "pass")(dispatch);
+    expect(result).toBe(false);
+    expect(showErrorDialog).toHaveBeenCalledWith("Terjadi kesalahan");
+  });
+
+  it("asyncSetAuthRegister success with message", async () => {
+    (registerApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+      message: "registered",
+    });
+    const result = await asyncSetAuthRegister("N", "a@b.com", "p")(dispatch);
+    expect(result).toBe(true);
+    expect(showSuccessDialog).toHaveBeenCalledWith("registered");
+  });
+
+  it("asyncSetAuthRegister success without message uses fallback", async () => {
+    (registerApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+    });
+    const result = await asyncSetAuthRegister("N", "a@b.com", "p")(dispatch);
+    expect(result).toBe(true);
+    expect(showSuccessDialog).toHaveBeenCalledWith("Berhasil registrasi");
+  });
+
+  it("asyncSetAuthRegister fail with and without message", async () => {
+    (registerApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
+      message: "taken",
+    });
+    expect(await asyncSetAuthRegister("N", "a@b.com", "p")(dispatch)).toBe(
+      false
+    );
+    expect(showErrorDialog).toHaveBeenCalledWith("taken");
+
+    (registerApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "fail",
+    });
+    expect(await asyncSetAuthRegister("N", "a@b.com", "p")(dispatch)).toBe(
+      false
+    );
+    expect(showErrorDialog).toHaveBeenCalledWith("Gagal registrasi");
+  });
+
+  it("asyncSetAuthRegister throw Error and non-Error", async () => {
+    (registerApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("err")
+    );
+    expect(await asyncSetAuthRegister("N", "a@b.com", "p")(dispatch)).toBe(
+      false
+    );
+    expect(showErrorDialog).toHaveBeenCalledWith("err");
+
+    (registerApi as ReturnType<typeof vi.fn>).mockRejectedValue(123);
+    expect(await asyncSetAuthRegister("N", "a@b.com", "p")(dispatch)).toBe(
+      false
+    );
+    expect(showErrorDialog).toHaveBeenCalledWith("Terjadi kesalahan");
+  });
+
+  it("asyncSetAuthLogout success", async () => {
+    (logoutApi as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: "success",
+    });
+    const result = await asyncSetAuthLogout()(dispatch);
+    expect(result).toBe(true);
+    expect(showSuccessDialog).toHaveBeenCalledWith("Berhasil logout");
+  });
+
+  it("asyncSetAuthLogout throw still returns true", async () => {
+    (logoutApi as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("err")
+    );
+    const result = await asyncSetAuthLogout()(dispatch);
+    expect(result).toBe(true);
   });
 });

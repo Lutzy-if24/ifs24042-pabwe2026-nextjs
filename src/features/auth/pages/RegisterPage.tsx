@@ -1,137 +1,113 @@
 "use client";
 
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import useInput from "../../../hooks/useInput";
-import {
-  asyncSetIsAuthRegister,
-  setIsAuthRegisterActionCreator,
-} from "../states/action";
-import { IconUser, IconMail, IconLock, IconLoader2, IconUserPlus } from "@tabler/icons-react";
+import useInput from "@/hooks/useInput";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
+import { asyncSetAuthRegister } from "@/features/auth/states/action";
+import { IconLock, IconMail, IconUser } from "@tabler/icons-react";
 
-function RegisterPage() {
+export default function RegisterPage() {
+  const [name, onNameChange] = useInput("");
+  const [email, onEmailChange] = useInput("");
+  const [password, onPasswordChange] = useInput("");
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { isAuthRegister } = useAppSelector((state) => state.auth);
 
-  const isAuthRegister = useAppSelector((state) => state.isAuthRegister);
-
-  const [loading, setLoading] = useState(false);
-  const [name, onChangeName, setName] = useInput("");
-  const [email, onChangeEmail, setEmail] = useInput("");
-  const [password, onChangePassword, setPassword] = useInput("");
-
-  // 1. Periksa apakah register telah selesai diproses
-  useEffect(() => {
-    if (isAuthRegister === true) {
-      setLoading(false);
-      dispatch(setIsAuthRegisterActionCreator(false));
-      setName("");
-      setEmail("");
-      setPassword("");
-      router.push("/auth/login");
-    } else if (isAuthRegister === false) {
-      setLoading(false);
-    }
-  }, [isAuthRegister, dispatch, setName, setEmail, setPassword, router]);
-
-  async function onSubmitHandler(event) {
-    event.preventDefault();
-    setLoading(true);
-    try {
-      await dispatch(asyncSetIsAuthRegister(name, email, password));
-    } finally {
-      setLoading(false);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !email.trim() || !password.trim()) return;
+    const success = await dispatch(
+      asyncSetAuthRegister(name, email, password)
+    );
+    if (success) {
+      router.replace("/auth/login");
     }
   }
 
   return (
-    <form onSubmit={onSubmitHandler} className="space-y-4">
-      <div>
-        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-          Nama Lengkap
-        </label>
-        <div className="relative">
-          <IconUser
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="text"
-            data-testid="register-name-input"
-            value={name}
-            onChange={onChangeName}
-            placeholder="Nama Lengkap Anda"
-            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-            required
-          />
-        </div>
-      </div>
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8">
+      <h2 className="text-2xl font-bold text-slate-800 mb-1">Daftar</h2>
+      <p className="text-slate-500 text-sm mb-6">
+        Buat akun baru untuk mulai berbagi
+      </p>
 
-      <div>
-        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-          Alamat Email
-        </label>
-        <div className="relative">
-          <IconMail
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="email"
-            data-testid="register-email-input"
-            value={email}
-            onChange={onChangeEmail}
-            placeholder="nama@email.com"
-            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Nama
+          </label>
+          <div className="relative">
+            <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              type="text"
+              value={name}
+              onChange={onNameChange}
+              placeholder="Nama lengkap"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              required
+              data-testid="register-name"
+            />
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-          Kata Sandi
-        </label>
-        <div className="relative">
-          <IconLock
-            size={18}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="password"
-            data-testid="register-password-input"
-            value={password}
-            onChange={onChangePassword}
-            placeholder="Minimal 6 karakter"
-            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-            required
-          />
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Email
+          </label>
+          <div className="relative">
+            <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              type="email"
+              value={email}
+              onChange={onEmailChange}
+              placeholder="email@contoh.com"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              required
+              data-testid="register-email"
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="pt-2">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Kata Sandi
+          </label>
+          <div className="relative">
+            <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              type="password"
+              value={password}
+              onChange={onPasswordChange}
+              placeholder="••••••••"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              required
+              minLength={6}
+              data-testid="register-password"
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
-          data-testid="register-submit-button"
-          disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-600/25 transition-all disabled:opacity-60"
+          disabled={isAuthRegister}
+          data-testid="register-submit"
+          className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
         >
-          {loading ? (
-            <>
-              <IconLoader2 size={18} className="animate-spin" />
-              <span>Mendaftarkan Akun...</span>
-            </>
-          ) : (
-            <>
-              <IconUserPlus size={18} stroke={2.5} />
-              <span>Daftar Akun</span>
-            </>
-          )}
+          {isAuthRegister ? "Memproses..." : "Daftar"}
         </button>
-      </div>
-    </form>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-slate-500">
+        Sudah punya akun?{" "}
+        <Link
+          href="/auth/login"
+          className="text-teal-600 hover:text-teal-700 font-medium"
+        >
+          Masuk
+        </Link>
+      </p>
+    </div>
   );
 }
-
-export default RegisterPage;

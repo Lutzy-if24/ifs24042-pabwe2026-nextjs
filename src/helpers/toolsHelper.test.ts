@@ -1,88 +1,80 @@
-import { describe, it, expect, vi } from "vitest";
-import Swal from "sweetalert2";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  showSuccessDialog,
   showErrorDialog,
   showWarningDialog,
-  showSuccessDialog,
   showConfirmDialog,
   formatDate,
 } from "./toolsHelper";
 
 vi.mock("sweetalert2", () => ({
   default: {
-    fire: vi.fn(),
-    close: vi.fn(),
+    fire: vi.fn().mockResolvedValue({ isConfirmed: true }),
   },
 }));
 
+import Swal from "sweetalert2";
+
 describe("toolsHelper", () => {
-  it("should call Swal.fire for showErrorDialog and handle confirmation", async () => {
-    Swal.fire.mockResolvedValue({ isConfirmed: true });
-    await showErrorDialog("Error test");
-    expect(Swal.fire).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Terjadi Kesalahan",
-        text: "Error test",
-        icon: "error",
-      })
-    );
-    expect(Swal.close).toHaveBeenCalled();
-
-    // Not confirmed branch
-    Swal.fire.mockResolvedValue({ isConfirmed: false });
-    await showErrorDialog("Error test");
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("should call Swal.fire for showWarningDialog and handle confirmation", async () => {
-    Swal.fire.mockResolvedValue({ isConfirmed: true });
-    await showWarningDialog("Warning test");
+  it("showSuccessDialog", async () => {
+    await showSuccessDialog("ok");
     expect(Swal.fire).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Peringatan",
-        text: "Warning test",
-        icon: "warning",
-      })
+      expect.objectContaining({ icon: "success", text: "ok" })
     );
-    expect(Swal.close).toHaveBeenCalled();
-
-    Swal.fire.mockResolvedValue({ isConfirmed: false });
-    await showWarningDialog("Warning test");
   });
 
-  it("should call Swal.fire for showSuccessDialog and handle confirmation", async () => {
-    Swal.fire.mockResolvedValue({ isConfirmed: true });
-    await showSuccessDialog("Success test");
+  it("showErrorDialog", async () => {
+    await showErrorDialog("err");
     expect(Swal.fire).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Tindakan Berhasil",
-        text: "Success test",
-        icon: "success",
-      })
+      expect.objectContaining({ icon: "error", text: "err" })
     );
-    expect(Swal.close).toHaveBeenCalled();
-
-    Swal.fire.mockResolvedValue({ isConfirmed: false });
-    await showSuccessDialog("Success test");
   });
 
-  it("should call Swal.fire for showConfirmDialog", async () => {
-    Swal.fire.mockResolvedValue({ isConfirmed: true });
-    const res = await showConfirmDialog("Confirm test?");
+  it("showWarningDialog", async () => {
+    await showWarningDialog("warn");
     expect(Swal.fire).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Konfirmasi",
-        text: "Confirm test?",
-        icon: "question",
-      })
+      expect.objectContaining({ icon: "warning", text: "warn" })
     );
-    expect(res.isConfirmed).toBe(true);
   });
 
-  it("should format date correctly or return fallback for empty date", () => {
+  it("showConfirmDialog", async () => {
+    const result = await showConfirmDialog("Title", "Text");
+    expect(result.isConfirmed).toBe(true);
+    expect(Swal.fire).toHaveBeenCalledWith(
+      expect.objectContaining({ icon: "question", title: "Title" })
+    );
+  });
+
+  it("formatDate returns formatted date", () => {
+    const result = formatDate("2024-10-05T03:07:11.000000Z");
+    expect(result).not.toBe("-");
+    expect(typeof result).toBe("string");
+  });
+
+  it("formatDate handles invalid and empty", () => {
     expect(formatDate(null)).toBe("-");
     expect(formatDate(undefined)).toBe("-");
-    const formatted = formatDate("2024-02-26T02:34:26.000000Z");
-    expect(formatted).toBeTruthy();
-    expect(typeof formatted).toBe("string");
+    expect(formatDate("")).toBe("-");
+    expect(formatDate("not-a-date")).toBe("-");
+  });
+
+  it("formatDate catch branch when Date throws", () => {
+    const OriginalDate = globalThis.Date;
+    class ThrowingDate {
+      constructor() {
+        throw new Error("boom");
+      }
+      static isNaN() {
+        return false;
+      }
+    }
+    // @ts-expect-error mock Date
+    globalThis.Date = ThrowingDate;
+    expect(formatDate("2024-01-01")).toBe("-");
+    globalThis.Date = OriginalDate;
   });
 });
