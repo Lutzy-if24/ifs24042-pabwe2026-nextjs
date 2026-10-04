@@ -54,6 +54,7 @@ export function formatDate(dateString?: string | null): string {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Jakarta",
     });
   } catch {
     return "-";
