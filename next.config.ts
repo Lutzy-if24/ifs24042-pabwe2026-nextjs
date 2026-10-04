@@ -20,6 +20,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Proxy: browser memanggil /api/... di domain sendiri, lalu Next.js
+  // meneruskannya ke Delcom dari sisi server (tidak lintas origin).
+  // Hanya dipakai kalau NEXT_PUBLIC_DELCOM_BASEURL diatur ke "/api".
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "https://open-api.delcom.org/api/v1/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
