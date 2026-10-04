@@ -90,7 +90,7 @@ export default function LoginPage() {
         Belum punya akun?{" "}
         <Link
           href="/auth/register"
-          className="text-teal-700 hover:text-teal-800 font-medium"
+          className="text-teal-700 hover:text-teal-800 font-medium underline"
         >
           Daftar
         </Link>
