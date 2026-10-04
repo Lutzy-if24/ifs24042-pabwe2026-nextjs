@@ -187,6 +187,8 @@ export default function DetailPage({ postId }: DetailPageProps) {
 
         <form onSubmit={handleComment} className="flex gap-2 mb-6">
           <input
+            id="comment"
+            name="comment"
             type="text"
             value={comment}
             onChange={onCommentChange}

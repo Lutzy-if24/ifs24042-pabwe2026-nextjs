@@ -56,7 +56,7 @@ export default function HomePage() {
           <h2 className="text-xl font-bold text-slate-800">
             {isMe ? "Postingan Saya" : "Semua Postingan"}
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             {filtered.length} postingan ditemukan
           </p>
         </div>
@@ -68,7 +68,7 @@ export default function HomePage() {
               data-testid="delete-all-btn"
               className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
             >
-              <IconTrash className="w-4 h-4" />
+              <IconTrash className="w-4 h-4" aria-hidden="true" />
               Hapus Semua
             </button>
           )}
@@ -78,19 +78,25 @@ export default function HomePage() {
             data-testid="add-post-btn"
             className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-teal-700 text-white hover:bg-teal-800"
           >
-            <IconPlus className="w-4 h-4" />
+            <IconPlus className="w-4 h-4" aria-hidden="true" />
             Tambah
           </button>
         </div>
       </div>
 
       <div className="relative mb-6">
-        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+        <IconSearch
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600"
+          aria-hidden="true"
+        />
         <input
+          id="search"
+          name="search"
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari postingan..."
+          aria-label="Cari postingan"
           data-testid="search-input"
           className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
@@ -117,7 +123,7 @@ export default function HomePage() {
                   className="w-full h-40 object-cover"
                 />
               ) : (
-                <div className="w-full h-40 bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center text-teal-400 text-sm">
+                <div className="w-full h-40 bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center text-teal-700 text-sm">
                   Tanpa cover
                 </div>
               )}
@@ -125,17 +131,20 @@ export default function HomePage() {
                 <p className="text-sm font-medium text-slate-800 line-clamp-2 mb-2">
                   {post.description}
                 </p>
-                <div className="flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center justify-between text-xs text-slate-600">
                   <span>{post.author?.name || "Anonim"}</span>
                   <span>{formatDate(post.created_at)}</span>
                 </div>
-                <div className="flex items-center gap-3 mt-3 text-xs text-slate-500">
+                <div className="flex items-center gap-3 mt-3 text-xs text-slate-600">
                   <span className="flex items-center gap-1">
-                    <IconHeart className="w-3.5 h-3.5" />
+                    <IconHeart className="w-3.5 h-3.5" aria-hidden="true" />
                     {getLikesCount(post.likes)}
                   </span>
                   <span className="flex items-center gap-1">
-                    <IconMessageCircle className="w-3.5 h-3.5" />
+                    <IconMessageCircle
+                      className="w-3.5 h-3.5"
+                      aria-hidden="true"
+                    />
                     {getCommentsCount(post.comments)}
                   </span>
                 </div>
