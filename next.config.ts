@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Next.js hanya mengirim variabel ber-awalan NEXT_PUBLIC_ ke browser.
+  // Blok ini menanam DELCOM_BASEURL (dari .env) ke kode saat build.
+  env: {
+    DELCOM_BASEURL: process.env.DELCOM_BASEURL || "",
+  },
   // Proxy: browser memanggil /api/... di domain sendiri, lalu Next.js
   // meneruskannya ke Delcom dari sisi server (tidak lintas origin).
   // Hanya dipakai kalau NEXT_PUBLIC_DELCOM_BASEURL diatur ke "/api".
