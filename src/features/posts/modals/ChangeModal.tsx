@@ -66,10 +66,14 @@ export default function ChangeModal({
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="change-description-input"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Deskripsi
             </label>
             <textarea
+              id="change-description-input"
               value={description}
               onChange={onDescriptionChange}
               rows={4}

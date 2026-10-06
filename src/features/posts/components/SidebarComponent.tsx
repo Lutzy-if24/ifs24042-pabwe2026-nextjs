@@ -40,8 +40,11 @@ export default function SidebarComponent({ open = false, onClose }: SidebarProps
   return (
     <>
       {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="Tutup overlay"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden cursor-default"
           onClick={onClose}
           data-testid="sidebar-overlay"
         />

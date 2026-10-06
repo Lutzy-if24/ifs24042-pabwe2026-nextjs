@@ -70,8 +70,9 @@ export default function ChangeCoverModal({
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div
-            className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center cursor-pointer hover:border-teal-400 transition-colors"
+          <button
+            type="button"
+            className="block w-full border-2 border-dashed border-slate-200 rounded-lg p-6 text-center cursor-pointer hover:border-teal-400 transition-colors"
             onClick={() => inputRef.current?.click()}
             data-testid="cover-dropzone"
           >
@@ -83,20 +84,21 @@ export default function ChangeCoverModal({
                 className="max-h-48 mx-auto rounded-lg object-cover"
               />
             ) : (
-              <div className="flex flex-col items-center gap-2 text-slate-600">
+              <span className="flex flex-col items-center gap-2 text-slate-600">
                 <IconPhoto className="w-10 h-10" />
                 <span className="text-sm">Klik untuk pilih gambar</span>
-              </div>
+              </span>
             )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-              data-testid="cover-input"
-            />
-          </div>
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+            data-testid="cover-input"
+            aria-label="Pilih gambar cover"
+          />
           <div className="flex justify-end gap-2">
             <button
               type="button"
