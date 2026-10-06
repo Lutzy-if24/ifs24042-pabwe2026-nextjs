@@ -1,4 +1,3 @@
-
 pipeline {
 
     agent any
@@ -210,9 +209,12 @@ pipeline {
                         -x ".env" \
                         -x ".env.*" \
                         -x "coverage/*" \
+                        -x ".next/*" \
+                        -x "out/*" \
                         -x ".trivy-cache/*" \
                         -x "latest-app.zip" \
-                        -x "trivy-results.sarif"
+                        -x "trivy-results.sarif" \
+                        -x ".docs/*"
 
                     echo "=== Application Package Created ==="
 
